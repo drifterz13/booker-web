@@ -21,7 +21,7 @@ export function BookSelector({ onChange }: { onChange: () => void }) {
     >
       <SelectTrigger
         aria-label="Book to chat with"
-        className="max-w-[min(65vw,360px)] rounded-lg border-none bg-sidebar shadow-none"
+        className="min-w-0 max-w-[min(65vw,360px)] rounded-lg border-none bg-sidebar shadow-none"
       >
         <BookOpen className="size-4 text-primary" />
         <SelectValue placeholder="Choose a book" />

@@ -27,10 +27,7 @@ export function BooksProvider({ children }: { children: ReactNode }) {
     );
     const id = existing?.id ?? crypto.randomUUID();
     if (!existing)
-      setBooks((current) => [
-        ...current,
-        { id, name: file.name, size: file.size, file },
-      ]);
+      setBooks((current) => [...current, { id, name: file.name, size: file.size, file }]);
     setSelectedId(id);
     return null;
   }

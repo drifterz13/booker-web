@@ -1,57 +1,68 @@
-# Booker web
+# Booker
 
-React Router and Vite frontend for Booker's Chainlit migration.
+Booker web is the React frontend for asking questions about PDF books. Select a
+book, preview it beside the chat, and explore its ideas. The interface is being
+built to replace Chainlit; PDF indexing and AI answers are not connected yet.
 
-## Development
+## Technology
+
+- **Application:** React, TypeScript, React Router, and Vite.
+- **UI:** Tailwind CSS, shadcn/ui with Radix primitives, and Lucide icons.
+- **PDF preview:** React-PDF and PDF.js for local rendering, with
+  react-resizable-panels for the chat and preview layout.
+- **Development:** pnpm, Vitest, React Testing Library, Oxlint, and Oxfmt.
+
+Components are organized by feature under `app/features/chat/` and
+`app/features/books/`. Route modules live in `app/routes/`; reusable controls
+and layout components live in `app/shared/components/`.
+
+## Prerequisites
+
+- Node.js 22.13.0 or newer and pnpm.
+- A modern browser and a PDF up to 100 MB to try the reader.
+- An unlocked, readable PDF. Password-protected or damaged PDFs cannot be
+  previewed.
+
+An OpenAI API key is not required for the current frontend preview.
+
+## Install
 
 ```sh
 pnpm install --frozen-lockfile
+```
+
+No environment configuration is needed yet. Selected files are rendered locally
+in the browser; book text is not sent to a server or an AI provider.
+
+## Run
+
+```sh
 pnpm dev
 ```
 
-## Checks
+Open the URL printed by Vite and select **Add a book**. **My books** shows the
+files selected during this visit. Selected books open beside chat on screens
+at least 1200 px wide. Drag the divider or focus it and use the arrow keys to
+resize. On smaller screens, **View PDF** opens a full-width preview.
+
+The reader supports page navigation, zoom, fit to width, text selection, and
+download. You can hide the preview and reopen it from the chat header. PDF.js
+and its worker are bundled locally and loaded when needed.
+
+Books and conversations stay in memory while navigating between pages.
+Refreshing clears them. Submitted questions appear in the conversation, but
+indexing, persistence, and AI answers still require backend integration.
+
+## Tests and checks
 
 ```sh
+pnpm test
 pnpm lint
 pnpm format:check
 pnpm typecheck
-pnpm test
 pnpm build
 ```
 
 Use `pnpm lint:fix` for automatic lint fixes and `pnpm format` to format with
-Oxfmt. Oxlint includes React and accessibility checks. Tailwind CSS uses the
-Vite plugin; shared design tokens live in `app/app.css`.
-
-## Organization
-
-- `app/routes/`: thin React Router route modules and workspace composition.
-- `app/features/chat/`: chat state, welcome, composer, suggestions, messages,
-  and chat page.
-- `app/features/books/`: book state, PDF validation, selection, upload controls,
-  book cards, and library page.
-- `app/shared/components/`: app shell and navigation.
-- `app/shared/components/ui/`: shadcn/ui Button, Textarea, Select, and Sheet.
-- `app/shared/lib/`: common styling helpers.
-
-The shadcn aliases in `components.json` route future components into the shared
-UI folder. Add primitives with `pnpm dlx shadcn@latest add <component>`; this
-project uses `~/shared/lib/utils` for its `cn` helper. If the CLI emits an import
-from the `cn` package, change it to that shared helper.
-
-## UI foundation
-
-`/` opens a new chat; `/books` shows the book library. The sidebar collapses on
-desktop and uses a keyboard-accessible drawer on mobile. PDF selection checks
-the extension, browser MIME type, empty files, and a 100 MB size limit.
-
-Files and conversations are kept in memory for the current visit and survive
-navigation between these pages. Refreshing clears them. No files are sent to a
-server, indexed, or persisted yet. Submitted questions appear in the
-conversation alongside an explicit preview notice; no AI responses are mocked.
-
-The Python backend still exposes its session flow through Chainlit. Backend
-integration should replace local book selection with an upload/indexing API
-and connect chat submission to streaming answers. Keep those transport concerns
-outside the presentation components, and add loading/error states when the API
-is available.
+Oxfmt. Keep the direct `pdfjs-dist` version in sync with React-PDF's dependency
+when updating the reader.

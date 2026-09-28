@@ -25,7 +25,7 @@ export function AppSidebar({
     <aside
       id={id}
       aria-label="Main sidebar"
-      className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r bg-sidebar p-4 md:w-64 lg:w-70"
+      className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r bg-sidebar p-4 md:w-56 lg:w-60"
     >
       <div className="flex items-center justify-between px-2 pt-2">
         <Link

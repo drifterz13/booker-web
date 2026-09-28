@@ -1,60 +1,87 @@
 import { useState } from "react";
 import { useBooks } from "~/features/books/books-context";
-import { BookSelector } from "~/features/books/components/book-selector";
-import { BookUploadButton } from "~/features/books/components/book-upload-button";
+import { BookPreview } from "~/features/books/components/book-preview";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "~/shared/components/ui/resizable";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "~/shared/components/ui/sheet";
+import { useMediaQuery } from "~/shared/hooks/use-media-query";
 import { useChat } from "../chat-context";
-import { ChatComposer } from "../components/chat-composer";
-import { ChatWelcome } from "../components/chat-welcome";
-import { MessageList } from "../components/message-list";
-import { PromptSuggestions } from "../components/prompt-suggestions";
+import { ChatSession } from "../components/chat-session";
 
 export function ChatPage() {
   const { session } = useChat();
-  return <ChatSession key={session} />;
-}
-
-function ChatSession() {
-  const [draft, setDraft] = useState("");
   const { selectedBook } = useBooks();
-  const { messages, sendMessage, newChat } = useChat();
-  const hasMessages = messages.length > 0;
+  const desktop = useMediaQuery("(min-width: 1200px)");
+  const [closedBookId, setClosedBookId] = useState<string>();
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const previewOpen = Boolean(selectedBook && closedBookId !== selectedBook.id);
+  const showDesktopPreview = desktop && previewOpen;
+
+  function togglePreview() {
+    if (desktop) setClosedBookId(previewOpen ? selectedBook?.id : undefined);
+    else setMobilePreviewOpen(true);
+  }
+
   return (
-    <div className="flex min-h-full flex-col">
-      <header className="flex items-center justify-between gap-3 px-6 py-5 sm:px-9">
-        <BookSelector onChange={newChat} />
-        <span className="rounded-full border px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground">
-          PREVIEW
-        </span>
-      </header>
-      <section
-        aria-label="Book chat"
-        className={`mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 pb-10 sm:px-9 ${hasMessages ? "justify-end" : "justify-center pt-10 lg:pt-0"}`}
-      >
-        {hasMessages ? <MessageList messages={messages} /> : <ChatWelcome />}
-        <ChatComposer
-          value={draft}
-          onChange={setDraft}
-          bookName={selectedBook?.name}
-          onSend={() => {
-            if (selectedBook) {
-              sendMessage(draft);
-              setDraft("");
-            }
-          }}
-        />
-        {!hasMessages && (
+    <div className="h-full min-h-0">
+      <ResizablePanelGroup orientation="horizontal" id="book-chat">
+        <ResizablePanel
+          id="chat"
+          defaultSize={showDesktopPreview ? "55%" : "100%"}
+          minSize={showDesktopPreview ? "360px" : "0%"}
+        >
+          <div className="@container h-full overflow-y-auto">
+            <ChatSession
+              key={session}
+              onTogglePreview={togglePreview}
+              previewOpen={showDesktopPreview}
+            />
+          </div>
+        </ResizablePanel>
+        {showDesktopPreview && selectedBook && (
           <>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <BookUploadButton variant="outline" onAdded={newChat} />
-              <span className="text-xs text-muted-foreground">PDF · up to 100 MB</span>
-            </div>
-            <PromptSuggestions onSelect={setDraft} />
+            <ResizableHandle
+              withHandle
+              aria-label="Resize chat and PDF preview"
+              className="w-2 bg-sidebar hover:bg-secondary"
+            />
+            <ResizablePanel id="pdf" defaultSize="45%" minSize="320px">
+              <BookPreview
+                key={selectedBook.id}
+                book={selectedBook}
+                onClose={() => setClosedBookId(selectedBook.id)}
+              />
+            </ResizablePanel>
           </>
         )}
-      </section>
-      <footer className="px-6 pb-5 text-center text-[11px] text-muted-foreground">
-        Made for thoughtful reading.
-      </footer>
+      </ResizablePanelGroup>
+      {selectedBook && (
+        <Sheet
+          open={!desktop && mobilePreviewOpen && Boolean(selectedBook)}
+          onOpenChange={setMobilePreviewOpen}
+        >
+          <SheetContent
+            side="right"
+            showCloseButton={false}
+            className="w-full gap-0 p-0 sm:max-w-none"
+          >
+            <SheetTitle className="sr-only">PDF preview</SheetTitle>
+            <SheetDescription className="sr-only">
+              Read your selected book and return to the chat when you are ready.
+            </SheetDescription>
+            {selectedBook && (
+              <BookPreview
+                key={selectedBook.id}
+                book={selectedBook}
+                onClose={() => setMobilePreviewOpen(false)}
+              />
+            )}
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }
