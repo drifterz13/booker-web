@@ -1,97 +1,57 @@
-# Welcome to React Router!
+# Booker web
 
-A modern, production-ready template for building full-stack React applications using React Router.
+React Router and Vite frontend for Booker's Chainlit migration.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Development
 
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
-
-```bash
-npm install
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-### Development
+## Checks
 
-Start the development server with HMR:
-
-```bash
-npm run dev
+```sh
+pnpm lint
+pnpm format:check
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
-Your application will be available at `http://localhost:5173`.
+Use `pnpm lint:fix` for automatic lint fixes and `pnpm format` to format with
+Oxfmt. Oxlint includes React and accessibility checks. Tailwind CSS uses the
+Vite plugin; shared design tokens live in `app/app.css`.
 
-## Building for Production
+## Organization
 
-Create a production build:
+- `app/routes/`: thin React Router route modules and workspace composition.
+- `app/features/chat/`: chat state, welcome, composer, suggestions, messages,
+  and chat page.
+- `app/features/books/`: book state, PDF validation, selection, upload controls,
+  book cards, and library page.
+- `app/shared/components/`: app shell and navigation.
+- `app/shared/components/ui/`: shadcn/ui Button, Textarea, Select, and Sheet.
+- `app/shared/lib/`: common styling helpers.
 
-```bash
-npm run build
-```
+The shadcn aliases in `components.json` route future components into the shared
+UI folder. Add primitives with `pnpm dlx shadcn@latest add <component>`; this
+project uses `~/shared/lib/utils` for its `cn` helper. If the CLI emits an import
+from the `cn` package, change it to that shared helper.
 
-## Deployment
+## UI foundation
 
-### Docker Deployment
+`/` opens a new chat; `/books` shows the book library. The sidebar collapses on
+desktop and uses a keyboard-accessible drawer on mobile. PDF selection checks
+the extension, browser MIME type, empty files, and a 100 MB size limit.
 
-To build and run using Docker:
+Files and conversations are kept in memory for the current visit and survive
+navigation between these pages. Refreshing clears them. No files are sent to a
+server, indexed, or persisted yet. Submitted questions appear in the
+conversation alongside an explicit preview notice; no AI responses are mocked.
 
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
-
-# Development checks
-
-Use `pnpm lint` for Oxlint (including React and accessibility rules),
-`pnpm format` to format with Oxfmt, and `pnpm format:check` to check formatting.
-Run `pnpm typecheck` and `pnpm build` before committing.
-
-Tailwind CSS is configured through `@tailwindcss/vite` in `vite.config.ts` and
-imported by `app/app.css`. Use Tailwind utilities in components and keep shared
-design tokens in the CSS theme.
+The Python backend still exposes its session flow through Chainlit. Backend
+integration should replace local book selection with an upload/indexing API
+and connect chat submission to streaming answers. Keep those transport concerns
+outside the presentation components, and add loading/error states when the API
+is available.

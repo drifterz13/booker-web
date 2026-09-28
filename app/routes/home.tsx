@@ -1,12 +1,12 @@
-import { Welcome } from "../welcome/welcome";
+import { ChatPage } from "~/features/chat/pages/chat-page";
 
 export function meta() {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "New chat · Booker" },
+    { name: "description", content: "A thoughtful space to explore and chat with your books." },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return <ChatPage />;
 }
