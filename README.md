@@ -85,3 +85,13 @@ This template comes with [Tailwind CSS](https://tailwindcss.com/) already config
 ---
 
 Built with ❤️ using React Router.
+
+# Development checks
+
+Use `pnpm lint` for Oxlint (including React and accessibility rules),
+`pnpm format` to format with Oxfmt, and `pnpm format:check` to check formatting.
+Run `pnpm typecheck` and `pnpm build` before committing.
+
+Tailwind CSS is configured through `@tailwindcss/vite` in `vite.config.ts` and
+imported by `app/app.css`. Use Tailwind utilities in components and keep shared
+design tokens in the CSS theme.
