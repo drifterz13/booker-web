@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PanelLeftOpen } from "lucide-react";
 import { Outlet, useLocation } from "react-router";
-import { useChat } from "~/features/chat/chat-context";
+import { useBookChat } from "~/features/chat/chat-context";
 import { AppSidebar } from "./app-sidebar";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "./ui/sheet";
@@ -10,7 +10,7 @@ import { cn } from "../lib/utils";
 export function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { newChat } = useChat();
+  const { newChat } = useBookChat();
   const { pathname } = useLocation();
   const pageName = pathname === "/books" ? "My books" : "Booker";
   const closeMobile = () => setMobileOpen(false);

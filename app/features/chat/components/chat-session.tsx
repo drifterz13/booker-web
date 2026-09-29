@@ -3,7 +3,7 @@ import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useBooks } from "~/features/books/books-context";
 import { BookSelector } from "~/features/books/components/book-selector";
 import { Button } from "~/shared/components/ui/button";
-import { useChat } from "../chat-context";
+import { useBookChat } from "../chat-context";
 import { ChatComposer } from "./chat-composer";
 import { ChatWelcome } from "./chat-welcome";
 import { MessageList } from "./message-list";
@@ -19,8 +19,10 @@ export function ChatSession({
   previewOpen: boolean;
 }) {
   const [draft, setDraft] = useState("");
-  const { selectedBook } = useBooks();
-  const { messages, sendMessage, newChat } = useChat();
+  const { selectedBook, retry: refreshBooks } = useBooks();
+  const { messages, sendMessage, status, error, stop, regenerate, progress } = useBookChat();
+  const busy = status === "submitted" || status === "streaming";
+  const ready = Boolean(selectedBook?.active_index_id);
   const hasMessages = messages.length > 0;
 
   return (
@@ -28,7 +30,7 @@ export function ChatSession({
       <header className="flex items-center justify-between gap-3 px-6 py-5 sm:px-9">
         <BookSelector
           onChange={() => {
-            newChat();
+            setDraft("");
             onBookSelected();
           }}
         />
@@ -58,14 +60,46 @@ export function ChatSession({
         aria-label="Book chat"
         className={`mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 pb-10 @min-[640px]:px-9 ${hasMessages ? "justify-end" : "justify-center pt-10 @min-[800px]:pt-0"}`}
       >
-        {hasMessages ? <MessageList messages={messages} /> : <ChatWelcome />}
+        {hasMessages ? <MessageList messages={messages} busy={busy} /> : <ChatWelcome />}
+        {busy && (
+          <output className="mb-4 block text-sm text-muted-foreground">
+            {progress ?? (status === "submitted" ? "Thinking…" : "Answering…")}
+          </output>
+        )}
+        {selectedBook && !ready && (
+          <Button variant="ghost" size="sm" onClick={refreshBooks} className="mb-3 self-start">
+            Check book readiness
+          </Button>
+        )}
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 flex items-center justify-between gap-3 text-sm text-destructive"
+          >
+            <p>{error.message}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void regenerate();
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
         <ChatComposer
           value={draft}
           onChange={setDraft}
           bookName={selectedBook?.filename}
+          busy={busy}
+          ready={ready}
+          onStop={() => {
+            void stop();
+          }}
           onSend={() => {
-            if (selectedBook) {
-              sendMessage(draft);
+            if (selectedBook && ready && !busy && draft.trim()) {
+              void sendMessage({ text: draft.trim() });
               setDraft("");
             }
           }}

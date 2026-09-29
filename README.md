@@ -7,9 +7,8 @@ connected yet.
 ## Stack
 
 - React, TypeScript, React Router, and Vite
-- TanStack Query
+- TanStack Query, AI SDK
 - Tailwind CSS, shadcn/ui, Radix, and Lucide
-- React-PDF and PDF.js
 - Vitest, React Testing Library, MSW, Oxlint, and Oxfmt
 
 ## Installation

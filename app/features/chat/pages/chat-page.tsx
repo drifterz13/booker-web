@@ -8,11 +8,11 @@ import {
 } from "~/shared/components/ui/resizable";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "~/shared/components/ui/sheet";
 import { useMediaQuery } from "~/shared/hooks/use-media-query";
-import { useChat } from "../chat-context";
+import { useBookChat } from "../chat-context";
 import { ChatSession } from "../components/chat-session";
 
 export function ChatPage() {
-  const { session } = useChat();
+  const { session } = useBookChat();
   const { selectedBook } = useBooks();
   const desktop = useMediaQuery("(min-width: 1200px)");
   const [closedBookId, setClosedBookId] = useState<string>();
@@ -31,7 +31,7 @@ export function ChatPage() {
           defaultSize={showDesktopPreview ? "55%" : "100%"}
           minSize={showDesktopPreview ? "360px" : "0%"}
         >
-          <div className="@container h-full overflow-y-auto">
+          <div data-chat-scroll className="@container h-full overflow-y-auto">
             <ChatSession
               key={session}
               onTogglePreview={togglePreview}
