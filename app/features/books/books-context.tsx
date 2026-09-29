@@ -1,41 +1,33 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { validateBook } from "./lib/validate-book";
-import type { Book } from "./types";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { listBooks } from "./api/books";
+import type { BookSummary } from "./api/types";
+import { bookKeys, BOOK_PAGE_SIZE } from "./queries";
 
 interface BooksContextValue {
-  books: Book[];
-  selectedBook: Book | undefined;
+  books: BookSummary[];
+  selectedBook: BookSummary | undefined;
   selectBook: (id: string) => void;
-  addBook: (file: File) => string | null;
+  loading: boolean;
+  error: Error | null;
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMore: () => void;
+  retry: () => void;
 }
 
 const BooksContext = createContext<BooksContextValue | null>(null);
 
-// Files stay in memory for this visit. Replace addBook with API ingestion when available.
 export function BooksProvider({ children }: { children: ReactNode }) {
-  const [books, setBooks] = useState<Book[]>([]);
   const [selectedId, setSelectedId] = useState<string>();
-
-  function addBook(file: File) {
-    const error = validateBook(file);
-
-    if (error) return error;
-
-    const existing = books.find(
-      (book) =>
-        book.name === file.name &&
-        book.size === file.size &&
-        book.file.lastModified === file.lastModified,
-    );
-    const id = existing?.id ?? crypto.randomUUID();
-
-    if (!existing)
-      setBooks((current) => [...current, { id, name: file.name, size: file.size, file }]);
-
-    setSelectedId(id);
-
-    return null;
-  }
+  const library = useInfiniteQuery({
+    queryKey: [...bookKeys.lists, "selector"],
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) => listBooks(pageParam, BOOK_PAGE_SIZE, signal),
+    getNextPageParam: (last, _pages, offset) =>
+      last.length === BOOK_PAGE_SIZE ? offset + BOOK_PAGE_SIZE : undefined,
+  });
+  const books = library.data?.pages.flat() ?? [];
 
   return (
     <BooksContext.Provider
@@ -43,14 +35,22 @@ export function BooksProvider({ children }: { children: ReactNode }) {
         books,
         selectedBook: books.find((book) => book.id === selectedId),
         selectBook: setSelectedId,
-        addBook,
+        loading: library.isPending,
+        error: library.error,
+        hasMore: library.hasNextPage,
+        loadingMore: library.isFetchingNextPage,
+        loadMore: () => {
+          void library.fetchNextPage();
+        },
+        retry: () => {
+          void library.refetch();
+        },
       }}
     >
       {children}
     </BooksContext.Provider>
   );
 }
-
 export function useBooks() {
   const context = useContext(BooksContext);
 

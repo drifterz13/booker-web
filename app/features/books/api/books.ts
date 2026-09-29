@@ -11,3 +11,9 @@ export function createBook(filename: string, objectKey: string) {
     body: JSON.stringify({ filename, object_key: objectKey }),
   });
 }
+
+export function getBookPdf(id: string, signal?: AbortSignal) {
+  return apiRequest<{ url: string; expires_in: number }>(`/books/${encodeURIComponent(id)}/pdf`, {
+    signal,
+  });
+}

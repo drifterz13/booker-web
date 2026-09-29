@@ -15,7 +15,7 @@ export function AppSidebar({
   onNavigate: () => void;
   id?: string;
 }) {
-  const { books } = useBooks();
+  const { books, hasMore, loading } = useBooks();
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary",
@@ -61,7 +61,10 @@ export function AppSidebar({
         </NavLink>
         <NavLink to="/books" className={navClass} onClick={onNavigate}>
           <Library className="size-4" strokeWidth={1.7} />
-          My books<span className="ml-auto text-xs text-muted-foreground">{books.length}</span>
+          My books
+          <span className="ml-auto text-xs text-muted-foreground">
+            {loading ? "…" : `${books.length}${hasMore ? "+" : ""}`}
+          </span>
         </NavLink>
       </nav>
       <div className="mt-9 border-t px-3 pt-5">
@@ -76,7 +79,7 @@ export function AppSidebar({
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
-            {books.slice(-5).map((book) => (
+            {books.slice(0, 5).map((book) => (
               <li key={book.id}>
                 <Link
                   to="/books"
@@ -84,7 +87,7 @@ export function AppSidebar({
                   className="flex items-center gap-2 py-1 text-xs text-muted-foreground hover:text-foreground"
                 >
                   <BookOpen className="size-3.5 shrink-0" />
-                  <span className="truncate">{book.name}</span>
+                  <span className="truncate">{book.filename}</span>
                 </Link>
               </li>
             ))}

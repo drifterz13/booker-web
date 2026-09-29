@@ -13,7 +13,17 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-export default function PdfReader({ url, name }: { url: string; name: string }) {
+const PDF_OPTIONS = { disableRange: true };
+
+export default function PdfReader({
+  url,
+  name,
+  onRetry,
+}: {
+  url: string;
+  name: string;
+  onRetry?: () => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [document, setDocument] = useState<PDFDocumentProxy>();
@@ -116,20 +126,24 @@ export default function PdfReader({ url, name }: { url: string; name: string }) 
         style={{ scrollbarGutter: "stable" }}
       >
         {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
+          <div role="alert" className="text-sm text-destructive">
+            <p>{error}</p>
+            {onRetry && (
+              <Button variant="outline" className="mt-3" onClick={onRetry}>
+                Retry PDF preview
+              </Button>
+            )}
+          </div>
         ) : (
           <Document
             file={url}
+            options={PDF_OPTIONS}
             suspense={false}
             onLoadSuccess={setDocument}
             onLoadError={() =>
               setError("This PDF could not be opened. It may be damaged or unsupported.")
             }
-            onSourceError={() =>
-              setError("This PDF could not be read. Try selecting the file again.")
-            }
+            onSourceError={() => setError("This PDF could not be read. Try reopening the preview.")}
             onPassword={() =>
               setError("This PDF is password protected. Select an unlocked copy to preview it.")
             }

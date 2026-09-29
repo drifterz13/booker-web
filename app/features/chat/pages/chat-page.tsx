@@ -16,13 +16,11 @@ export function ChatPage() {
   const { selectedBook } = useBooks();
   const desktop = useMediaQuery("(min-width: 1200px)");
   const [closedBookId, setClosedBookId] = useState<string>();
-  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const previewOpen = Boolean(selectedBook && closedBookId !== selectedBook.id);
   const showDesktopPreview = desktop && previewOpen;
 
   function togglePreview() {
-    if (desktop) setClosedBookId(previewOpen ? selectedBook?.id : undefined);
-    else setMobilePreviewOpen(true);
+    setClosedBookId(previewOpen ? selectedBook?.id : undefined);
   }
 
   return (
@@ -37,7 +35,8 @@ export function ChatPage() {
             <ChatSession
               key={session}
               onTogglePreview={togglePreview}
-              previewOpen={showDesktopPreview}
+              onBookSelected={() => setClosedBookId(undefined)}
+              previewOpen={previewOpen}
             />
           </div>
         </ResizablePanel>
@@ -60,8 +59,8 @@ export function ChatPage() {
       </ResizablePanelGroup>
       {selectedBook && (
         <Sheet
-          open={!desktop && mobilePreviewOpen && Boolean(selectedBook)}
-          onOpenChange={setMobilePreviewOpen}
+          open={!desktop && previewOpen}
+          onOpenChange={(open) => setClosedBookId(open ? undefined : selectedBook.id)}
         >
           <SheetContent
             side="right"
@@ -76,7 +75,7 @@ export function ChatPage() {
               <BookPreview
                 key={selectedBook.id}
                 book={selectedBook}
-                onClose={() => setMobilePreviewOpen(false)}
+                onClose={() => setClosedBookId(selectedBook.id)}
               />
             )}
           </SheetContent>

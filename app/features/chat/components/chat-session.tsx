@@ -2,7 +2,6 @@ import { useState } from "react";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useBooks } from "~/features/books/books-context";
 import { BookSelector } from "~/features/books/components/book-selector";
-import { BookUploadButton } from "~/features/books/components/book-upload-button";
 import { Button } from "~/shared/components/ui/button";
 import { useChat } from "../chat-context";
 import { ChatComposer } from "./chat-composer";
@@ -12,9 +11,11 @@ import { PromptSuggestions } from "./prompt-suggestions";
 
 export function ChatSession({
   onTogglePreview,
+  onBookSelected,
   previewOpen,
 }: {
   onTogglePreview: () => void;
+  onBookSelected: () => void;
   previewOpen: boolean;
 }) {
   const [draft, setDraft] = useState("");
@@ -25,7 +26,12 @@ export function ChatSession({
   return (
     <div className="flex min-h-full flex-col">
       <header className="flex items-center justify-between gap-3 px-6 py-5 sm:px-9">
-        <BookSelector onChange={newChat} />
+        <BookSelector
+          onChange={() => {
+            newChat();
+            onBookSelected();
+          }}
+        />
         {selectedBook ? (
           <Button
             variant="ghost"
@@ -56,7 +62,7 @@ export function ChatSession({
         <ChatComposer
           value={draft}
           onChange={setDraft}
-          bookName={selectedBook?.name}
+          bookName={selectedBook?.filename}
           onSend={() => {
             if (selectedBook) {
               sendMessage(draft);
@@ -66,10 +72,6 @@ export function ChatSession({
         />
         {!hasMessages && (
           <>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <BookUploadButton variant="outline" onAdded={newChat} />
-              <span className="text-xs text-muted-foreground">PDF · up to 100 MB</span>
-            </div>
             <PromptSuggestions onSelect={setDraft} />
           </>
         )}
