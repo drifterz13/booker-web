@@ -2,11 +2,13 @@
 
 Booker web is the React frontend for asking questions about PDF books. Select a
 book, preview it beside the chat, and explore its ideas. The interface is being
-built to replace Chainlit; PDF indexing and AI answers are not connected yet.
+built to replace Chainlit; saved-library uploads start backend indexing, while
+chat answers are not connected yet.
 
 ## Technology
 
 - **Application:** React, TypeScript, React Router, and Vite.
+- **Server data:** TanStack Query for the saved library and book creation.
 - **UI:** Tailwind CSS, shadcn/ui with Radix primitives, and Lucide icons.
 - **PDF preview:** React-PDF and PDF.js for local rendering, with
   react-resizable-panels for the chat and preview layout.
@@ -31,8 +33,11 @@ An OpenAI API key is not required for the current frontend preview.
 pnpm install --frozen-lockfile
 ```
 
-No environment configuration is needed yet. Selected files are rendered locally
-in the browser; book text is not sent to a server or an AI provider.
+The saved library uses the Booker API, defaulting to `http://127.0.0.1:8000`.
+Copy `.env.example` to `.env` to change `VITE_API_BASE_URL`, then restart Vite.
+Start the backend and its storage service and create its configured bucket first.
+The API must allow your web origin. Storage must allow presigned PUT requests
+and expose the `ETag` response header to that origin.
 
 ## Run
 
@@ -40,8 +45,17 @@ in the browser; book text is not sent to a server or an AI provider.
 pnpm dev
 ```
 
-Open the URL printed by Vite and select **Add a book**. **My books** shows the
-files selected during this visit. Selected books open beside chat on screens
+Open the URL printed by Vite and visit **My books**. **Add a book** uploads a PDF
+directly to storage in 8 MiB parts, with three concurrent transfers and byte-based
+progress. Unfinished uploads can be cancelled; failed PUTs are retried up to two
+times. After completion, the app creates the book and refreshes the saved library.
+If creation fails, **Retry creating book** reuses the uploaded object. Check the
+library first if the response was lost, since the API rejects duplicate object keys.
+Uploads survive navigation within the workspace, but not a browser refresh.
+The library has 20-book pages and displays upload status and cover thumbnails.
+
+The chat page still uses local files; connecting saved books to the chat selector
+and remote PDF preview is a separate step. Selected local books open beside chat on screens
 at least 1200 px wide. Drag the divider or focus it and use the arrow keys to
 resize. On smaller screens, **View PDF** opens a full-width preview.
 
@@ -49,9 +63,9 @@ The reader supports page navigation, zoom, fit to width, text selection, and
 download. You can hide the preview and reopen it from the chat header. PDF.js
 and its worker are bundled locally and loaded when needed.
 
-Books and conversations stay in memory while navigating between pages.
-Refreshing clears them. Submitted questions appear in the conversation, but
-indexing, persistence, and AI answers still require backend integration.
+Saved library books persist through the API. Local chat selections and conversations
+stay in memory while navigating and are cleared on refresh. Submitted questions
+appear in the conversation; AI answers are not connected yet.
 
 ## Tests and checks
 
@@ -64,5 +78,11 @@ pnpm build
 ```
 
 Use `pnpm lint:fix` for automatic lint fixes and `pnpm format` to format with
-Oxfmt. Keep the direct `pdfjs-dist` version in sync with React-PDF's dependency
+Oxfmt. Oxlint loads `@stylistic/eslint-plugin` to enforce blank lines after
+variable declarations, before returns and throws, and around control-flow blocks,
+functions, classes, type aliases, and interfaces. Consecutive variable declarations
+can stay together.
+Run `pnpm lint:fix` before `pnpm format` when applying both.
+
+Keep the direct `pdfjs-dist` version in sync with React-PDF's dependency
 when updating the reader.

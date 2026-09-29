@@ -18,7 +18,9 @@ export function BooksProvider({ children }: { children: ReactNode }) {
 
   function addBook(file: File) {
     const error = validateBook(file);
+
     if (error) return error;
+
     const existing = books.find(
       (book) =>
         book.name === file.name &&
@@ -26,9 +28,12 @@ export function BooksProvider({ children }: { children: ReactNode }) {
         book.file.lastModified === file.lastModified,
     );
     const id = existing?.id ?? crypto.randomUUID();
+
     if (!existing)
       setBooks((current) => [...current, { id, name: file.name, size: file.size, file }]);
+
     setSelectedId(id);
+
     return null;
   }
 
@@ -48,6 +53,8 @@ export function BooksProvider({ children }: { children: ReactNode }) {
 
 export function useBooks() {
   const context = useContext(BooksContext);
+
   if (!context) throw new Error("useBooks must be used within BooksProvider");
+
   return context;
 }

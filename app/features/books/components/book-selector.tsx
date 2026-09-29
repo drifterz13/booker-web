@@ -10,6 +10,7 @@ import { useBooks } from "../books-context";
 
 export function BookSelector({ onChange }: { onChange: () => void }) {
   const { books, selectedBook, selectBook } = useBooks();
+
   return (
     <Select
       value={selectedBook?.id ?? ""}

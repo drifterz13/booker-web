@@ -9,6 +9,7 @@ vi.mock("react-pdf", () => {
     numPages: 2,
     getPage: async () => ({ getViewport: () => ({ width: 612, height: 792 }) }),
   };
+
   return {
     pdfjs: { GlobalWorkerOptions: {} },
     Document: ({
@@ -29,6 +30,7 @@ vi.mock("react-pdf", () => {
         else if (file === "locked") onPassword();
         else onLoadSuccess(document);
       }, [file, onLoadSuccess, onLoadError, onPassword]);
+
       return <div>{children}</div>;
     },
     Page: ({ pageNumber, width }: { pageNumber: number; width: number }) => (
@@ -68,6 +70,7 @@ afterEach(() => {
 
 it("navigates pages, limits zoom, and fits the page to its available width", async () => {
   const user = userEvent.setup();
+
   render(<PdfReader url="blob:book" name="book.pdf" />);
   expect(screen.getByText("1 / 2")).toBeTruthy();
   expect((screen.getByLabelText("Previous page") as HTMLButtonElement).disabled).toBe(true);

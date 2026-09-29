@@ -4,9 +4,11 @@ import type { ChatMessage } from "../types";
 
 export function MessageList({ messages }: { messages: ChatMessage[] }) {
   const endRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
   }, [messages]);
+
   return (
     <div className="space-y-6 py-8" role="log" aria-label="Conversation" aria-live="polite">
       {messages.map((message) => (

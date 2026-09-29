@@ -6,6 +6,7 @@ import { BookUploadButton } from "./components/book-upload-button";
 
 function LibraryHarness() {
   const { books, selectedBook } = useBooks();
+
   return (
     <>
       <BookUploadButton />
@@ -18,6 +19,7 @@ function LibraryHarness() {
 
 it("adds and selects a PDF while avoiding duplicate selections", async () => {
   const user = userEvent.setup();
+
   render(
     <BooksProvider>
       <LibraryHarness />
@@ -25,6 +27,7 @@ it("adds and selects a PDF while avoiding duplicate selections", async () => {
   );
   const file = new File(["%PDF-1.4"], "reading.pdf", { type: "application/pdf" });
   const input = screen.getByLabelText("Choose a PDF book");
+
   await user.upload(input, file);
   expect(screen.getByRole("status").textContent).toBe("1:reading.pdf");
   await user.upload(input, file);
@@ -33,6 +36,7 @@ it("adds and selects a PDF while avoiding duplicate selections", async () => {
 
 it("shows validation feedback and leaves the library empty for invalid files", async () => {
   const user = userEvent.setup({ applyAccept: false });
+
   render(
     <BooksProvider>
       <LibraryHarness />

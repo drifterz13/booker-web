@@ -21,6 +21,7 @@ export function ChatSession({
   const { selectedBook } = useBooks();
   const { messages, sendMessage, newChat } = useChat();
   const hasMessages = messages.length > 0;
+
   return (
     <div className="flex min-h-full flex-col">
       <header className="flex items-center justify-between gap-3 px-6 py-5 sm:px-9">

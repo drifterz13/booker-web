@@ -25,11 +25,15 @@ export function BookUploadButton({
         tabIndex={-1}
         onChange={(event) => {
           const file = event.target.files?.[0];
+
           if (file) {
             const validationError = addBook(file);
+
             setError(validationError);
+
             if (!validationError) onAdded?.();
           }
+
           event.target.value = "";
         }}
       />

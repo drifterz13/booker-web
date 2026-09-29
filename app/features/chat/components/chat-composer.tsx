@@ -17,6 +17,7 @@ export function ChatComposer({ value, onChange, onSend, bookName }: ChatComposer
 
   function submit() {
     if (!canSend) return;
+
     onSend();
     textareaRef.current?.focus();
   }

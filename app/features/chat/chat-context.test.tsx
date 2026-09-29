@@ -5,6 +5,7 @@ import { ChatProvider, useChat } from "./chat-context";
 
 function ChatHarness() {
   const { messages, session, sendMessage, newChat } = useChat();
+
   return (
     <>
       <button onClick={() => sendMessage("  A question  ")}>Send</button>
@@ -18,6 +19,7 @@ function ChatHarness() {
 
 it("trims questions and resets the conversation for a new chat", async () => {
   const user = userEvent.setup();
+
   render(
     <ChatProvider>
       <ChatHarness />

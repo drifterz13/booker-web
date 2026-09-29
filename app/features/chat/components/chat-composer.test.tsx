@@ -7,6 +7,7 @@ import { ChatComposer } from "./chat-composer";
 it("requires both a book and a nonblank question before sending", () => {
   const onSend = vi.fn();
   const { rerender } = render(<ChatComposer value="Hello" onChange={vi.fn()} onSend={onSend} />);
+
   expect((screen.getByRole("button", { name: "Send message" }) as HTMLButtonElement).disabled).toBe(
     true,
   );
@@ -23,8 +24,10 @@ it("requires both a book and a nonblank question before sending", () => {
 it("sends with Enter, preserves Shift+Enter, and clears the submitted draft", async () => {
   const user = userEvent.setup();
   const onSend = vi.fn();
+
   function Harness() {
     const [draft, setDraft] = useState("");
+
     return (
       <ChatComposer
         value={draft}
@@ -37,8 +40,10 @@ it("sends with Enter, preserves Shift+Enter, and clears the submitted draft", as
       />
     );
   }
+
   render(<Harness />);
   const input = screen.getByRole("textbox", { name: "Your question" });
+
   await user.type(input, "First{Shift>}{Enter}{/Shift}Second");
   expect(onSend).not.toHaveBeenCalled();
   await user.keyboard("{Enter}");

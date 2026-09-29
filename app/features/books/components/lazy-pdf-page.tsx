@@ -19,16 +19,20 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
 
   useEffect(() => {
     let active = true;
+
     document
       .getPage(pageNumber)
       .then((page) => {
         if (!active) return;
+
         const viewport = page.getViewport({ scale: 1 });
+
         setAspectRatio(viewport.width / viewport.height);
       })
       .catch(() => {
         if (active) setError(true);
       });
+
     return () => {
       active = false;
     };
@@ -36,7 +40,9 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
 
   useEffect(() => {
     const frame = frameRef.current;
+
     if (!frame) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -46,7 +52,9 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
       },
       { root: scrollRoot.current, rootMargin: "200px" },
     );
+
     observer.observe(frame);
+
     return () => observer.disconnect();
   }, [scrollRoot]);
 

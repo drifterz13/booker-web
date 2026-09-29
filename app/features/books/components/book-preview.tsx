@@ -10,6 +10,7 @@ const PdfReader = lazy(() => import("./pdf-reader"));
 
 export function BookPreview({ book, onClose }: { book: Book; onClose: () => void }) {
   const url = useBookUrl(book.file);
+
   return (
     <section aria-label="PDF preview" className="flex h-full min-h-0 flex-col bg-sidebar">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">

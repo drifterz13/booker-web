@@ -21,7 +21,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   function sendMessage(content: string) {
     const trimmed = content.trim();
+
     if (!trimmed) return;
+
     setMessages((current) => [
       ...current,
       { id: crypto.randomUUID(), role: "user", content: trimmed },
@@ -37,6 +39,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
 export function useChat() {
   const context = useContext(ChatContext);
+
   if (!context) throw new Error("useChat must be used within ChatProvider");
+
   return context;
 }

@@ -4,8 +4,11 @@ export function validateBook(file: Pick<File, "name" | "size" | "type">): string
   if (!file.name.toLowerCase().endsWith(".pdf") || (file.type && file.type !== "application/pdf")) {
     return "Please choose a PDF file.";
   }
+
   if (file.size === 0) return "This file is empty. Choose another PDF.";
+
   if (file.size > MAX_BOOK_SIZE) return "Your PDF must be 100 MB or smaller.";
+
   return null;
 }
 

@@ -13,6 +13,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 it("waits until the page is near the viewport and keeps its frame fixed while the canvas renders", async () => {
   let notifyIntersection: (entries: { isIntersecting: boolean }[]) => void = () => {};
+
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -26,10 +27,12 @@ it("waits until the page is near the viewport and keeps its frame fixed while th
   const document = {
     getPage: async () => ({ getViewport: () => ({ width: 600, height: 800 }) }),
   } as unknown as PDFDocumentProxy;
+
   render(
     <LazyPdfPage document={document} pageNumber={1} width={450} scrollRoot={{ current: null }} />,
   );
   const frame = screen.getByLabelText("PDF page 1");
+
   await waitFor(() => expect(parseFloat(frame.style.aspectRatio)).toBe(0.75));
   expect(frame.style.width).toBe("450px");
   expect(screen.queryByRole("button", { name: "Finish rendering" })).toBeNull();

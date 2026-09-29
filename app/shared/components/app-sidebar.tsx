@@ -21,6 +21,7 @@ export function AppSidebar({
       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary",
       isActive && "bg-secondary font-medium",
     );
+
   return (
     <aside
       id={id}

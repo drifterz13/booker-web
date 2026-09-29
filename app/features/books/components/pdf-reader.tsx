@@ -24,11 +24,15 @@ export default function PdfReader({ url, name }: { url: string; name: string }) 
 
   useEffect(() => {
     const container = containerRef.current;
+
     if (!container) return;
+
     const observer = new ResizeObserver(([entry]) => {
       if (entry) setWidth(Math.max(1, entry.contentRect.width));
     });
+
     observer.observe(container);
+
     return () => observer.disconnect();
   }, []);
 

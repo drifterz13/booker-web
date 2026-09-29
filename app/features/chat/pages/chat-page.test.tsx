@@ -14,6 +14,7 @@ it("renders full-width chat before hydration with no PDF pane, divider, or viewe
   );
   const document = new DOMParser().parseFromString(html, "text/html");
   const chat = document.querySelector<HTMLElement>('[data-slot="resizable-panel"][id="chat"]');
+
   expect(chat?.style.flexBasis).toBe("100%");
   expect(document.querySelector('[id="pdf"]')).toBeNull();
   expect(document.querySelector('[data-slot="resizable-handle"]')).toBeNull();
