@@ -1,4 +1,16 @@
+.git
+.agents
+.codex
+.aws
+.env
+.env.*
+!.env.example
+node_modules
+.pnpm-store
 .react-router
 build
-node_modules
+coverage
+tests
+.DS_Store
+*.log
 README.md

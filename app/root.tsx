@@ -50,6 +50,14 @@ export default function App() {
   );
 }
 
+export function HydrateFallback() {
+  return (
+    <main className="flex min-h-dvh items-center justify-center text-sm text-muted-foreground">
+      <output>Loading Booker…</output>
+    </main>
+  );
+}
+
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
