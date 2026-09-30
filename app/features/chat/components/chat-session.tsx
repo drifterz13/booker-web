@@ -8,15 +8,18 @@ import { ChatComposer } from "./chat-composer";
 import { ChatWelcome } from "./chat-welcome";
 import { MessageList } from "./message-list";
 import { PromptSuggestions } from "./prompt-suggestions";
+import type { CitationSource } from "../types";
 
 export function ChatSession({
   onTogglePreview,
   onBookSelected,
   previewOpen,
+  onCitation,
 }: {
   onTogglePreview: () => void;
   onBookSelected: () => void;
   previewOpen: boolean;
+  onCitation: (source: CitationSource) => void;
 }) {
   const [draft, setDraft] = useState("");
   const { books, selectedBook } = useBooks();
@@ -90,7 +93,7 @@ export function ChatSession({
       >
         {hasMessages ? (
           <div data-chat-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-4">
-            <MessageList messages={messages} busy={busy}>
+            <MessageList messages={messages} busy={busy} onCitation={onCitation}>
               {statusContent}
             </MessageList>
           </div>

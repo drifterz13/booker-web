@@ -19,16 +19,18 @@ export default function PdfReader({
   url,
   name,
   onRetry,
+  initialPage = 1,
 }: {
   url: string;
   name: string;
   onRetry?: () => void;
+  initialPage?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [document, setDocument] = useState<PDFDocumentProxy>();
   const pages = document?.numPages ?? 0;
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [zoom, setZoom] = useState(1);
   const [error, setError] = useState<string>();
 
@@ -139,7 +141,13 @@ export default function PdfReader({
             file={url}
             options={PDF_OPTIONS}
             suspense={false}
-            onLoadSuccess={setDocument}
+            onLoadSuccess={(loaded) => {
+              setDocument(loaded);
+
+              if (initialPage > loaded.numPages) {
+                setError(`The cited page ${initialPage} is not available in this PDF.`);
+              }
+            }}
             onLoadError={() =>
               setError("This PDF could not be opened. It may be damaged or unsupported.")
             }

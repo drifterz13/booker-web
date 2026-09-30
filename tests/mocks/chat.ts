@@ -1,5 +1,6 @@
 import { HttpResponse } from "msw";
 import { uploadedBook } from "./fixtures";
+import type { CitationData } from "~/features/chat/types";
 
 function sse(events: object[]) {
   return events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("");
@@ -18,7 +19,11 @@ const headers = {
   "x-vercel-ai-ui-message-stream": "v1",
 };
 
-export function chatAnswer(text = "Read **slowly**.", withSearch = false) {
+export function chatAnswer(
+  text = "Read **slowly**.",
+  withSearch = false,
+  citations: CitationData[] = [],
+) {
   const searchEvents = withSearch
     ? [
         {
@@ -56,6 +61,7 @@ export function chatAnswer(text = "Read **slowly**.", withSearch = false) {
       { type: "start", messageId: crypto.randomUUID() },
       ...searchEvents,
       ...textEvents(text),
+      ...citations.map((data) => ({ type: "data-citations", id: "citations", data })),
       { type: "finish" },
     ]) + "data: [DONE]\n\n",
     { headers },

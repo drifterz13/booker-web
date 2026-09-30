@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useBooks } from "~/features/books/books-context";
-import { BookPreview } from "~/features/books/components/book-preview";
+import { BookPreview, type CitationNavigation } from "~/features/books/components/book-preview";
+import type { CitationSource } from "../types";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -13,18 +14,44 @@ import { ChatSession } from "../components/chat-session";
 
 export function ChatPage() {
   const { session } = useBookChat();
-  const { selectedBook } = useBooks();
+  const { selectedBook, books } = useBooks();
   const desktop = useMediaQuery("(min-width: 1200px)");
   const [closedBookId, setClosedBookId] = useState<string>();
   const [mobilePreviewActivated, setMobilePreviewActivated] = useState(false);
+  const citationRequest = useRef(0);
+  const [citationTarget, setCitationTarget] = useState<{
+    chatBookId: string;
+    bookId: string;
+    navigation: CitationNavigation;
+  }>();
+  const activeCitation =
+    citationTarget?.chatBookId === selectedBook?.id ? citationTarget : undefined;
+  const previewBook = activeCitation
+    ? (books.find((book) => book.id === activeCitation.bookId) ?? {
+        id: activeCitation.bookId,
+        filename: "Cited book",
+      })
+    : selectedBook;
   const previewOpen = Boolean(
-    selectedBook && closedBookId !== selectedBook.id && (desktop || mobilePreviewActivated),
+    previewBook && closedBookId !== previewBook.id && (desktop || mobilePreviewActivated),
   );
   const showDesktopPreview = desktop && previewOpen;
 
   function togglePreview() {
     setMobilePreviewActivated(true);
-    setClosedBookId(previewOpen ? selectedBook?.id : undefined);
+    setClosedBookId(previewOpen ? previewBook?.id : undefined);
+  }
+
+  function openCitation(source: CitationSource) {
+    if (!selectedBook) return;
+
+    setCitationTarget({
+      chatBookId: selectedBook.id,
+      bookId: source.book_id,
+      navigation: { requestId: ++citationRequest.current, pages: source.pdf_pages },
+    });
+    setClosedBookId(undefined);
+    setMobilePreviewActivated(true);
   }
 
   return (
@@ -39,7 +66,9 @@ export function ChatPage() {
             <ChatSession
               key={session}
               onTogglePreview={togglePreview}
+              onCitation={openCitation}
               onBookSelected={() => {
+                setCitationTarget(undefined);
                 setClosedBookId(undefined);
                 setMobilePreviewActivated(true);
               }}
@@ -47,7 +76,7 @@ export function ChatPage() {
             />
           </div>
         </ResizablePanel>
-        {showDesktopPreview && selectedBook && (
+        {showDesktopPreview && previewBook && (
           <>
             <ResizableHandle
               withHandle
@@ -56,20 +85,21 @@ export function ChatPage() {
             />
             <ResizablePanel id="pdf" defaultSize="45%" minSize="320px">
               <BookPreview
-                key={selectedBook.id}
-                book={selectedBook}
-                onClose={() => setClosedBookId(selectedBook.id)}
+                key={previewBook.id}
+                book={previewBook}
+                citation={activeCitation?.navigation}
+                onClose={() => setClosedBookId(previewBook.id)}
               />
             </ResizablePanel>
           </>
         )}
       </ResizablePanelGroup>
-      {selectedBook && (
+      {previewBook && (
         <Sheet
           open={!desktop && previewOpen}
           onOpenChange={(open) => {
             setMobilePreviewActivated(open);
-            setClosedBookId(open ? undefined : selectedBook.id);
+            setClosedBookId(open ? undefined : previewBook.id);
           }}
         >
           <SheetContent
@@ -81,11 +111,12 @@ export function ChatPage() {
             <SheetDescription className="sr-only">
               Read your selected book and return to the chat when you are ready.
             </SheetDescription>
-            {selectedBook && (
+            {previewBook && (
               <BookPreview
-                key={selectedBook.id}
-                book={selectedBook}
-                onClose={() => setClosedBookId(selectedBook.id)}
+                key={previewBook.id}
+                book={previewBook}
+                citation={activeCitation?.navigation}
+                onClose={() => setClosedBookId(previewBook.id)}
               />
             )}
           </SheetContent>

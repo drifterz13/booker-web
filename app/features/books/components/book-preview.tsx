@@ -9,8 +9,32 @@ import { PdfReaderLoading } from "./pdf-loading";
 // The URL is fetched in the browser before loading PDF.js, which requires browser APIs.
 const PdfReader = lazy(() => import("./pdf-reader"));
 
-export function BookPreview({ book, onClose }: { book: BookSummary; onClose: () => void }) {
-  const pdf = useQuery(bookPdfOptions(book.id));
+export interface CitationNavigation {
+  requestId: number;
+  pages: number[];
+}
+
+export function BookPreview({
+  book,
+  onClose,
+  citation,
+}: {
+  book: Pick<BookSummary, "id" | "filename">;
+  onClose: () => void;
+  citation?: CitationNavigation;
+}) {
+  const options = bookPdfOptions(book.id);
+  const pdf = useQuery(
+    citation
+      ? {
+          ...options,
+          // A new click always fetches a fresh signed URL. Do not retain it after closing.
+          queryKey: [...options.queryKey, "citation", String(citation.requestId)],
+          gcTime: 0,
+          staleTime: 0,
+        }
+      : options,
+  );
 
   return (
     <section aria-label="PDF preview" className="flex h-full min-h-0 flex-col bg-surface-subtle">
@@ -35,10 +59,11 @@ export function BookPreview({ book, onClose }: { book: BookSummary; onClose: () 
       ) : (
         <Suspense fallback={<PdfReaderLoading />}>
           <PdfReader
-            key={pdf.data.url}
+            key={`${pdf.data.url}:${citation?.requestId ?? "preview"}`}
             url={pdf.data.url}
             name={book.filename}
             onRetry={() => void pdf.refetch()}
+            initialPage={citation?.pages[0]}
           />
         </Suspense>
       )}

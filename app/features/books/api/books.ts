@@ -13,7 +13,7 @@ export function createBook(filename: string, objectKey: string) {
 }
 
 export function getBookPdf(id: string, signal?: AbortSignal) {
-  return apiRequest<{ url: string; expires_in: number }>(`/books/${encodeURIComponent(id)}/pdf`, {
+  return apiRequest<{ url: string; expires_in?: number }>(`/books/${encodeURIComponent(id)}/pdf`, {
     signal,
   });
 }

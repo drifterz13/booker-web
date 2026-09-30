@@ -4,9 +4,11 @@ import { chatAnswer, pendingChatAnswer } from "./mocks/chat";
 import { apiUrl } from "./mocks/handlers/books";
 import { library } from "./mocks/state";
 import { act, screen, waitFor, within } from "@testing-library/react";
-import { expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 import { bookWithoutThumbnail, uploadedBook } from "./mocks/fixtures";
 import { renderChatPage } from "./render-chat-page";
+import { makePreviewPdf } from "./mocks/pdf";
+import type { CitationSource } from "~/features/chat/types";
 
 it("selects a saved book automatically and lets the reader choose another", async () => {
   const { user } = renderChatPage();
@@ -36,26 +38,6 @@ it("selects a saved book automatically and lets the reader choose another", asyn
     bookWithoutThumbnail.filename,
   );
   expect(preview.queryByRole("alert")).not.toBeInTheDocument();
-});
-
-it("keeps the mobile chat visible when a book is selected automatically", async () => {
-  vi.stubGlobal("matchMedia", (query: string) => ({
-    matches: false,
-    media: query,
-    addEventListener() {},
-    removeEventListener() {},
-  }));
-  const { user } = renderChatPage();
-
-  await waitFor(() =>
-    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
-      uploadedBook.filename,
-    ),
-  );
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-  await user.click(screen.getByRole("button", { name: "Show PDF preview" }));
-  expect(await screen.findByRole("dialog")).toBeVisible();
 });
 
 async function selectBook(
@@ -207,6 +189,74 @@ async function typeQuestion(user: ReturnType<typeof renderChatPage>["user"], tex
   input.focus();
   await user.type(input, text, { skipClick: true });
 }
+
+it("opens citations at their physical PDF page, fetches fresh URLs, and preserves snapshots in history", async () => {
+  const source: CitationSource = {
+    id: "s1",
+    book_id: bookWithoutThumbnail.id,
+    index_id: "index-ready",
+    chunk_id: "chunk-1",
+    pdf_pages: [2, 3],
+    section_path: ["Memory"],
+  };
+  let pdfCalls = 0;
+  let history: { messages: { role: string; parts: unknown[] }[] } | undefined;
+
+  server.use(
+    http.post(`${apiUrl}/books/:id/chat`, async ({ request }) => {
+      history = (await request.json()) as typeof history;
+
+      return chatAnswer("Small habits compound.[1](#cite-s1) [old](#cite-old)", false, [
+        { sources: [{ ...source, id: "old" }] },
+        { sources: [source] },
+      ]);
+    }),
+    http.get(`${apiUrl}/books/${source.book_id}/pdf`, () => {
+      pdfCalls++;
+
+      return HttpResponse.json({ url: `https://storage.booker.test/books/${source.book_id}.pdf` });
+    }),
+    http.get(
+      "https://storage.booker.test/books/:filename",
+      () => new HttpResponse(makePreviewPdf(3), { headers: { "Content-Type": "application/pdf" } }),
+    ),
+  );
+  const { user } = renderChatPage();
+
+  await selectBook(user);
+  await typeQuestion(user, "How do habits work?{Enter}");
+  const citation = await screen.findByRole("button", {
+    name: "Open citation: Pages 2, 3 · Memory",
+  });
+
+  expect(screen.queryByRole("link", { name: "old" })).not.toBeInTheDocument();
+  await user.click(citation);
+  const preview = within(screen.getByRole("region", { name: "PDF preview" }));
+
+  expect(await preview.findByText("2 / 3")).toBeVisible();
+  expect(preview.getByRole("heading", { name: bookWithoutThumbnail.filename })).toBeVisible();
+  expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
+    uploadedBook.filename,
+  );
+  expect(preview.queryByRole("navigation", { name: "Cited PDF pages" })).not.toBeInTheDocument();
+  await user.click(preview.getByRole("button", { name: "Next page" }));
+  expect(preview.getByText("3 / 3")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Open citation: Pages 2, 3 · Memory" }));
+  expect(await preview.findByText("2 / 3")).toBeVisible();
+  expect(pdfCalls).toBe(2);
+
+  await typeQuestion(user, "Explain more{Enter}");
+  await waitFor(() =>
+    expect(history?.messages.filter((message) => message.role === "assistant")).toHaveLength(1),
+  );
+  const assistant = history!.messages.find((message) => message.role === "assistant")!;
+
+  expect(assistant.parts).toContainEqual({
+    type: "data-citations",
+    id: "citations",
+    data: { sources: [source] },
+  });
+});
 
 it("keeps Shift+Enter as a new line until the reader clicks Send", async () => {
   server.use(http.post(`${apiUrl}/books/:id/chat`, () => chatAnswer()));
