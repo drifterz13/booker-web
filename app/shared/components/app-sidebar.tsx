@@ -1,6 +1,7 @@
 import { BookOpen, Library, PanelLeftClose, SquarePen } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import { useBooks } from "~/features/books/books-context";
+import bookerIcon from "../assets/booker-icon.svg";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
 
@@ -36,7 +37,7 @@ export function AppSidebar({
           onClick={onNavigate}
         >
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BookOpen className="size-4" strokeWidth={1.7} />
+            <img src={bookerIcon} alt="" className="size-4 brightness-0 invert" />
           </span>
           <span className="text-lg font-semibold tracking-tight">
             booker<span className="text-primary">.</span>

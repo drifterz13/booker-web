@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" color="#3d5649">
+  <title>Booker Monogram</title>
+  <path fill="currentColor" fill-rule="evenodd" d="M25 17h27c16.4 0 26 8.5 26 21.1 0 8.1-4.2 14.1-11.1 17.4C76 58.5 81 65.4 81 74.2 81 88.2 70.4 96 52.5 96H25V17Zm14 12.9v19h12.5c8.2 0 12.5-3.5 12.5-9.5 0-6.2-4.4-9.5-12.6-9.5H39Zm0 31.4v22h13.4c9.5 0 14.3-3.8 14.3-10.8 0-7.1-4.8-11.2-14.3-11.2H39Z"/>
+  <path d="M25 17v79" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+</svg>
