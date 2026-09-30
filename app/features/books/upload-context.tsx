@@ -28,7 +28,6 @@ interface UploadState {
 interface UploadContextValue extends UploadState {
   busy: boolean;
   start: (file: File) => void;
-  cancel: () => void;
   retryCreate: () => void;
 }
 
@@ -37,7 +36,6 @@ const UploadContext = createContext<UploadContextValue | null>(null);
 export function BookUploadProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [state, setState] = useState<UploadState>({ phase: "idle", progress: 0 });
-  const controller = useRef<AbortController | null>(null);
   const running = useRef(false);
   const completed = useRef<{ filename: string; objectKey: string } | null>(null);
   const mutation = useMutation({
@@ -75,7 +73,6 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
   async function run(file: File) {
     const control = new AbortController();
 
-    controller.current = control;
     let upload: Upload | undefined;
     let finished = false;
 
@@ -127,7 +124,6 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
       });
     } finally {
       running.current = false;
-      controller.current = null;
     }
   }
 
@@ -165,10 +161,6 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
         busy,
         start,
         retryCreate,
-        cancel: () => {
-          if (state.phase === "preparing" || state.phase === "uploading")
-            controller.current?.abort();
-        },
       }}
     >
       {children}

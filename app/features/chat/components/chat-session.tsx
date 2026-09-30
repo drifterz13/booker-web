@@ -19,23 +19,20 @@ export function ChatSession({
   previewOpen: boolean;
 }) {
   const [draft, setDraft] = useState("");
-  const { selectedBook, retry: refreshBooks } = useBooks();
+  const { books, selectedBook } = useBooks();
   const { messages, sendMessage, status, error, stop, regenerate, progress } = useBookChat();
   const busy = status === "submitted" || status === "streaming";
-  const ready = Boolean(selectedBook?.active_index_id);
+  const processingBooks = books.some(
+    (book) => book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
+  );
   const hasMessages = messages.length > 0;
-  const hasStatus = busy || (selectedBook && !ready) || error;
+  const hasStatus = busy || error;
   const statusContent = (
     <>
       {busy && (
         <output className="block text-sm text-muted-foreground">
           {progress ?? (status === "submitted" ? "Thinking…" : "Answering…")}
         </output>
-      )}
-      {selectedBook && !ready && (
-        <Button variant="ghost" size="sm" onClick={refreshBooks} className="self-start">
-          Check book readiness
-        </Button>
       )}
       {error && (
         <div role="alert" className="flex items-center justify-between gap-3 text-sm text-danger">
@@ -107,13 +104,13 @@ export function ChatSession({
           value={draft}
           onChange={setDraft}
           bookName={selectedBook?.filename}
+          waitingForBook={!selectedBook && processingBooks}
           busy={busy}
-          ready={ready}
           onStop={() => {
             void stop();
           }}
           onSend={() => {
-            if (selectedBook && ready && !busy && draft.trim()) {
+            if (selectedBook?.active_index_id && !busy && draft.trim()) {
               void sendMessage({ text: draft.trim() });
               setDraft("");
             }

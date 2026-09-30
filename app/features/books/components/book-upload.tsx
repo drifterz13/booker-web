@@ -41,11 +41,6 @@ export function BookUpload() {
           )}
           {buttonLabel}
         </Button>
-        {(upload.phase === "preparing" || upload.phase === "uploading") && (
-          <Button variant="outline" onClick={upload.cancel}>
-            Cancel upload
-          </Button>
-        )}
         {upload.canRetryCreate && (
           <Button variant="outline" onClick={upload.retryCreate}>
             Retry creating book

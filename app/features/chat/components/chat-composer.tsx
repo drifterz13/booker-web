@@ -8,8 +8,8 @@ interface ChatComposerProps {
   onChange: (value: string) => void;
   onSend: () => void;
   bookName?: string;
+  waitingForBook?: boolean;
   busy?: boolean;
-  ready?: boolean;
   onStop?: () => void;
 }
 
@@ -18,13 +18,13 @@ export function ChatComposer({
   onChange,
   onSend,
   bookName,
+  waitingForBook = false,
   busy = false,
-  ready = true,
   onStop,
 }: ChatComposerProps) {
   const hintId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const canSend = Boolean(value.trim() && bookName && ready && !busy);
+  const canSend = Boolean(value.trim() && bookName && !busy);
 
   function submit() {
     if (!canSend) return;
@@ -82,14 +82,12 @@ export function ChatComposer({
       </form>
       <p
         id={hintId}
-        className={
-          bookName && ready ? "sr-only" : "mt-2 text-center text-caption text-muted-foreground"
-        }
+        className={bookName ? "sr-only" : "mt-2 text-center text-caption text-muted-foreground"}
       >
-        {bookName && !ready
-          ? "This book is not ready for chat yet."
-          : bookName
-            ? "Enter to send · Shift + Enter for a new line"
+        {bookName
+          ? "Enter to send · Shift + Enter for a new line"
+          : waitingForBook
+            ? "Processing books will be available here automatically."
             : "Choose a PDF book to start a conversation."}
       </p>
     </div>

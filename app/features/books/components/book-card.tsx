@@ -1,5 +1,6 @@
 import { BookOpen } from "lucide-react";
 import { useState } from "react";
+import { cn } from "~/shared/lib/utils";
 import type { BookSummary } from "../api/types";
 
 function bookStatus(book: BookSummary) {
@@ -12,6 +13,8 @@ function bookStatus(book: BookSummary) {
 
 export function BookCard({ book }: { book: BookSummary }) {
   const [failedThumbnail, setFailedThumbnail] = useState<string>();
+  const ready = book.status === "uploaded" && Boolean(book.active_index_id);
+  const processing = book.status === "uploaded" && !book.active_index_id;
 
   return (
     <article className="flex flex-col rounded-xl border bg-background p-5 transition-shadow hover:shadow-sm">
@@ -29,7 +32,15 @@ export function BookCard({ book }: { book: BookSummary }) {
             <BookOpen className="size-8" />
           )}
         </div>
-        <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-muted-foreground">
+        <span
+          className={cn(
+            "rounded-md px-2 py-1 text-xs",
+            book.status === "failed" && "bg-danger/10 text-danger",
+            book.status === "uploading" && "bg-surface-subtle text-muted-foreground",
+            ready && "bg-success-subtle font-medium text-success",
+            processing && "bg-warning-subtle font-medium text-warning",
+          )}
+        >
           {bookStatus(book)}
         </span>
       </div>

@@ -26,16 +26,24 @@ export function BooksProvider({ children }: { children: ReactNode }) {
     queryFn: ({ pageParam, signal }) => listBooks(pageParam, BOOK_PAGE_SIZE, signal),
     getNextPageParam: (last, _pages, offset) =>
       last.length === BOOK_PAGE_SIZE ? offset + BOOK_PAGE_SIZE : undefined,
+    refetchInterval: (query) =>
+      query.state.data?.pages
+        .flat()
+        .some(
+          (book) =>
+            book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
+        )
+        ? 3_000
+        : false,
   });
   const books = library.data?.pages.flat() ?? [];
+  const readyBooks = books.filter((book) => book.status === "uploaded" && book.active_index_id);
 
   return (
     <BooksContext.Provider
       value={{
         books,
-        selectedBook:
-          books.find((book) => book.id === selectedId) ??
-          books.find((book) => book.status === "uploaded"),
+        selectedBook: readyBooks.find((book) => book.id === selectedId) ?? readyBooks[0],
         selectBook: setSelectedId,
         loading: library.isPending,
         error: library.error,

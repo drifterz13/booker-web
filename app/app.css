@@ -28,6 +28,10 @@
   --color-ring: var(--primary);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
   --color-surface-subtle: var(--surface-subtle);
   --color-overlay: var(--overlay);
   --text-caption: 0.6875rem;
@@ -54,6 +58,10 @@
   --surface-subtle: #f8f8f7;
   --danger: #b42318;
   --danger-foreground: #ffffff;
+  --success: #246b45;
+  --success-subtle: #e4f2e8;
+  --warning: #805600;
+  --warning-subtle: #fff1d6;
   --selection: #dce7de;
   --overlay: rgb(0 0 0 / 50%);
 }

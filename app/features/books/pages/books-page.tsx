@@ -13,8 +13,7 @@ export function BooksPage() {
     refetchInterval: (query) =>
       query.state.data?.some(
         (book) =>
-          book.status === "uploading" ||
-          (book.status === "uploaded" && !book.active_index_id),
+          book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
       )
         ? 3_000
         : false,
@@ -81,22 +80,14 @@ export function BooksPage() {
           <Button
             variant="outline"
             disabled={offset === 0 || books.isFetching}
-            onClick={() =>
-              setOffset((value) => Math.max(0, value - BOOK_PAGE_SIZE))
-            }
+            onClick={() => setOffset((value) => Math.max(0, value - BOOK_PAGE_SIZE))}
           >
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {offset / BOOK_PAGE_SIZE + 1}
-          </span>
+          <span className="text-sm text-muted-foreground">Page {offset / BOOK_PAGE_SIZE + 1}</span>
           <Button
             variant="outline"
-            disabled={
-              books.isFetching ||
-              !books.data ||
-              books.data.length < BOOK_PAGE_SIZE
-            }
+            disabled={books.isFetching || !books.data || books.data.length < BOOK_PAGE_SIZE}
             onClick={() => setOffset((value) => value + BOOK_PAGE_SIZE)}
           >
             Next

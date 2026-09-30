@@ -172,22 +172,33 @@ it("stops a streaming answer and clears the conversation when switching books", 
   expect(await screen.findByText("Explore this book at your own pace.")).toBeVisible();
 });
 
-it("lets the reader send their drafted question once the book finishes processing", async () => {
+it("offers a processing book for chat once it becomes ready", async () => {
   server.use(http.post(`${apiUrl}/books/:id/chat`, () => chatAnswer()));
   library[0].active_index_id = null;
+  library[1].active_index_id = null;
   const { user } = renderChatPage();
 
-  await selectBook(user);
+  const selector = screen.getByRole("combobox", { name: "Book to chat with" });
+
+  await waitFor(() => expect(selector).toHaveTextContent("No books ready yet"));
+  await user.click(selector);
+  expect(
+    screen.getByRole("option", { name: `${library[0].filename} · Processing` }),
+  ).toHaveAttribute("data-disabled");
+  await user.keyboard("{Escape}");
   await typeQuestion(user, "Help me read");
   expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
-  expect(screen.getByText("This book is not ready for chat yet.")).toBeVisible();
+  expect(screen.getByText("Processing books will be available here automatically.")).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Check book readiness" })).not.toBeInTheDocument();
   library[0].active_index_id = "index-ready";
-  await user.click(screen.getByRole("button", { name: "Check book readiness" }));
-  await waitFor(() => expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled());
+  await waitFor(() => expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled(), {
+    timeout: 4_000,
+  });
+  expect(selector).toHaveTextContent(library[0].filename);
   await user.click(screen.getByRole("button", { name: "Send message" }));
   expect(await screen.findByText("Help me read")).toBeVisible();
   expect(await screen.findByText("slowly", { selector: "strong" })).toBeVisible();
-});
+}, 8_000);
 
 async function typeQuestion(user: ReturnType<typeof renderChatPage>["user"], text: string) {
   const input = screen.getByRole("textbox", { name: "Your question" });

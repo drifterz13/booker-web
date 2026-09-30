@@ -12,6 +12,10 @@ colors:
   surface-subtle: "#f8f8f7"
   danger: "#b42318"
   danger-foreground: "#ffffff"
+  success: "#246b45"
+  success-subtle: "#e4f2e8"
+  warning: "#805600"
+  warning-subtle: "#fff1d6"
   selection: "#dce7de"
 typography:
   body:
@@ -72,6 +76,8 @@ The source of truth is [app/app.css](app/app.css): Tailwind theme tokens map to 
 - **Muted foreground** (`text-muted-foreground`) is for secondary information. Its value is dark enough for normal text on the background, subtle surface, and secondary surfaces.
 - **Border** (`border-border`) separates surfaces without heavy shadows.
 - **Danger** (`text-danger`, `bg-danger`) is for errors and destructive actions. Pair a danger fill with `text-danger-foreground`.
+- **Success** (`text-success`, `bg-success-subtle`) marks a book that is ready to chat.
+- **Warning** (`text-warning`, `bg-warning-subtle`) marks a book that is still processing before chat is available.
 - **Selection** and **overlay** are browser and sheet tokens; use `--selection` and `bg-overlay` rather than literal colors.
 
 ## Typography
