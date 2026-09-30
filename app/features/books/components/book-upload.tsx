@@ -1,22 +1,14 @@
 import { useRef } from "react";
-import { Upload } from "lucide-react";
+import { LoaderCircle, Upload } from "lucide-react";
 import { Button } from "~/shared/components/ui/button";
 import { useBookUpload } from "../upload-context";
-
-const labels = {
-  idle: "",
-  preparing: "Preparing upload…",
-  uploading: "Uploading",
-  finalizing: "Finalizing upload…",
-  creating: "Adding book…",
-  success: "Book added. Processing has started.",
-  cancelled: "Upload cancelled.",
-  error: "",
-};
 
 export function BookUpload() {
   const input = useRef<HTMLInputElement>(null);
   const upload = useBookUpload();
+  const buttonLabel = upload.busy
+    ? `Uploading…${upload.phase === "uploading" ? ` ${upload.progress}%` : ""}`
+    : "Add a book";
 
   return (
     <div className="w-full max-w-sm">
@@ -42,7 +34,12 @@ export function BookUpload() {
           onClick={() => input.current?.click()}
           className="rounded-lg"
         >
-          <Upload className="size-4" /> Add a book
+          {upload.busy ? (
+            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Upload className="size-4" aria-hidden="true" />
+          )}
+          {buttonLabel}
         </Button>
         {(upload.phase === "preparing" || upload.phase === "uploading") && (
           <Button variant="outline" onClick={upload.cancel}>
@@ -55,25 +52,6 @@ export function BookUpload() {
           </Button>
         )}
       </div>
-      {upload.busy && (
-        <p className="mt-3 truncate text-xs text-muted-foreground" title={upload.filename}>
-          {upload.filename}
-        </p>
-      )}
-      {upload.phase === "uploading" && (
-        <progress
-          aria-label="PDF upload progress"
-          className="mt-2 h-2 w-full accent-primary"
-          max={100}
-          value={upload.progress}
-        />
-      )}
-      {labels[upload.phase] && (
-        <output className="mt-2 text-sm text-muted-foreground">
-          {labels[upload.phase]}
-          {upload.phase === "uploading" ? ` ${upload.progress}%` : ""}
-        </output>
-      )}
       {upload.error && upload.phase === "error" && (
         <p role="alert" className="mt-2 text-sm text-destructive">
           {upload.error}

@@ -8,7 +8,16 @@ import { BOOK_PAGE_SIZE, bookListOptions } from "../queries";
 
 export function BooksPage() {
   const [offset, setOffset] = useState(0);
-  const books = useQuery(bookListOptions(offset));
+  const books = useQuery({
+    ...bookListOptions(offset),
+    refetchInterval: (query) =>
+      query.state.data?.some(
+        (book) =>
+          book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
+      )
+        ? 3_000
+        : false,
+  });
 
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-12 sm:px-10">

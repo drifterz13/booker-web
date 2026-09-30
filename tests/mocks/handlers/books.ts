@@ -45,6 +45,7 @@ export const bookHandlers = [
       id: body.object_key,
       filename: body.filename,
       status: "uploading",
+      active_index_id: null,
       thumbnail_url: null,
     });
 

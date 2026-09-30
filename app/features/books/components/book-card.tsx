@@ -2,7 +2,13 @@ import { BookOpen } from "lucide-react";
 import { useState } from "react";
 import type { BookSummary } from "../api/types";
 
-const statusLabels = { uploading: "Uploading", uploaded: "Uploaded", failed: "Upload failed" };
+function bookStatus(book: BookSummary) {
+  if (book.status === "failed") return "Upload failed";
+
+  if (book.status === "uploading") return "Uploading";
+
+  return book.active_index_id ? "Ready to chat" : "Processing";
+}
 
 export function BookCard({ book }: { book: BookSummary }) {
   const [failedThumbnail, setFailedThumbnail] = useState<string>();
@@ -24,7 +30,7 @@ export function BookCard({ book }: { book: BookSummary }) {
           )}
         </div>
         <span className="rounded-md bg-sidebar px-2 py-1 text-xs text-muted-foreground">
-          {statusLabels[book.status]}
+          {bookStatus(book)}
         </span>
       </div>
       <h2 className="break-words text-sm font-medium">{book.filename}</h2>

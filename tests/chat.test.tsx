@@ -4,31 +4,58 @@ import { chatAnswer, pendingChatAnswer } from "./mocks/chat";
 import { apiUrl } from "./mocks/handlers/books";
 import { library } from "./mocks/state";
 import { act, screen, waitFor, within } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { bookWithoutThumbnail, uploadedBook } from "./mocks/fixtures";
 import { renderChatPage } from "./render-chat-page";
 
-it("lets the reader choose a saved book from the list and shows its PDF preview", async () => {
+it("selects a saved book automatically and lets the reader choose another", async () => {
   const { user } = renderChatPage();
   const selector = screen.getByRole("combobox", { name: "Book to chat with" });
 
   expect(screen.queryByRole("region", { name: "PDF preview" })).not.toBeInTheDocument();
-  await waitFor(() => expect(selector).toBeEnabled());
-  await user.click(selector);
-  await user.click(await screen.findByRole("option", { name: uploadedBook.filename }));
+  await waitFor(() => expect(selector).toHaveTextContent(uploadedBook.filename));
 
-  expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
-    uploadedBook.filename,
-  );
+  const initialPreview = within(await screen.findByRole("region", { name: "PDF preview" }));
+
+  expect(initialPreview.getByRole("heading", { name: uploadedBook.filename })).toBeVisible();
+
+  selector.focus();
+  await user.keyboard("{ArrowDown}");
+  await user.click(await screen.findByRole("option", { name: bookWithoutThumbnail.filename }));
+
+  await waitFor(() => expect(selector).toHaveTextContent(bookWithoutThumbnail.filename));
+
   const preview = within(await screen.findByRole("region", { name: "PDF preview" }));
 
-  expect(preview.getByRole("heading", { name: uploadedBook.filename })).toBeVisible();
+  expect(
+    await preview.findByRole("heading", { name: bookWithoutThumbnail.filename }),
+  ).toBeVisible();
   expect(await preview.findByText("1 / 1")).toBeVisible();
   expect(preview.getByRole("link", { name: "Download PDF" })).toHaveAttribute(
     "download",
-    uploadedBook.filename,
+    bookWithoutThumbnail.filename,
   );
   expect(preview.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+it("keeps the mobile chat visible when a book is selected automatically", async () => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+  }));
+  const { user } = renderChatPage();
+
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
+      uploadedBook.filename,
+    ),
+  );
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Show PDF preview" }));
+  expect(await screen.findByRole("dialog")).toBeVisible();
 });
 
 async function selectBook(
@@ -38,6 +65,9 @@ async function selectBook(
   const selector = screen.getByRole("combobox", { name: "Book to chat with" });
 
   await waitFor(() => expect(selector).toBeEnabled());
+
+  if (selector.textContent?.includes(name)) return;
+
   selector.focus();
   await user.keyboard("{ArrowDown}");
   await user.click(await screen.findByRole("option", { name }));

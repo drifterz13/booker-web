@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { delay, http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { bookWithoutThumbnail, makeBook, uploadedBook } from "./mocks/fixtures";
@@ -24,7 +24,7 @@ describe("My books", () => {
       "src",
       uploadedBook.thumbnail_url,
     );
-    expect(card.getByText("Uploaded")).toBeVisible();
+    expect(card.getByText("Ready to chat")).toBeVisible();
     expect(card.getByText(/PDF · Added/)).toBeVisible();
   });
 
@@ -38,7 +38,7 @@ describe("My books", () => {
 
     expect(title).toBeVisible();
     expect(card.queryByRole("img")).not.toBeInTheDocument();
-    expect(card.getByText("Uploaded")).toBeVisible();
+    expect(card.getByText("Ready to chat")).toBeVisible();
     expect(card.getByText(/PDF · Added/)).toBeVisible();
   });
 
@@ -52,6 +52,36 @@ describe("My books", () => {
     expect(await screen.findByRole("heading", { name: uploadedBook.filename })).toBeVisible();
     expect(screen.getByText(label)).toBeVisible();
   });
+
+  it("shows processing for an uploaded book before its chat index is ready", async () => {
+    listBooks([makeBook({ active_index_id: null })]);
+    renderBooksPage();
+
+    expect(await screen.findByText("Processing")).toBeVisible();
+    expect(screen.queryByText("Ready to chat")).not.toBeInTheDocument();
+  });
+
+  it("refreshes a processing book and stops polling when it is ready", async () => {
+    let requests = 0;
+
+    server.use(
+      http.get(`${apiUrl}/books`, () => {
+        requests += 1;
+
+        return HttpResponse.json([
+          makeBook({ active_index_id: requests === 1 ? null : "index-ready", thumbnail_url: null }),
+        ]);
+      }),
+    );
+    renderBooksPage();
+
+    expect(await screen.findByText("Processing")).toBeVisible();
+    expect(await screen.findByText("Ready to chat", {}, { timeout: 4_000 })).toBeVisible();
+    expect(requests).toBe(2);
+
+    await new Promise((resolve) => setTimeout(resolve, 3_200));
+    expect(requests).toBe(2);
+  }, 8_000);
 
   it("guides the reader to add a PDF when their library is empty", async () => {
     listBooks([]);
@@ -83,6 +113,34 @@ describe("My books", () => {
 });
 
 describe("Add a book", () => {
+  it("shows upload progress in the button while the file is being sent", async () => {
+    server.use(
+      http.post(`${apiUrl}/uploads/:id/parts`, async ({ params }) => {
+        await delay(300);
+
+        return HttpResponse.json([
+          {
+            part_number: 1,
+            url: `https://storage.booker.test/uploads/${params.id}/1`,
+            expires_in: 900,
+          },
+        ]);
+      }),
+    );
+    const { user } = renderBooksPage();
+
+    await screen.findByRole("heading", { name: uploadedBook.filename });
+    await user.upload(
+      screen.getByLabelText("Choose a PDF book"),
+      new File(["PDF"], "In progress.pdf", { type: "application/pdf" }),
+    );
+
+    expect(await screen.findByRole("button", { name: /^Uploading… \d+%$/ })).toBeDisabled();
+    expect(screen.queryByRole("status", { name: /Uploading/ })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Add a book" })).toBeEnabled());
+    expect(screen.queryByText("Book added. Processing has started.")).not.toBeInTheDocument();
+  });
+
   it.each([
     ["a small PDF", 32],
     ["a PDF spanning multiple storage parts", 9 * 1024 * 1024],
@@ -114,7 +172,6 @@ describe("Add a book", () => {
       }),
     );
 
-    expect(await screen.findByText("Book added. Processing has started.")).toBeVisible();
     const title = await screen.findByRole("heading", {
       name: "My new book.pdf",
     });
@@ -123,6 +180,7 @@ describe("Add a book", () => {
     expect(card.getByText("Uploading")).toBeVisible();
     expect(card.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add a book" })).toBeEnabled();
+    expect(screen.queryByText("Book added. Processing has started.")).not.toBeInTheDocument();
   });
 
   it.each([

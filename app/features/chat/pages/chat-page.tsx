@@ -16,10 +16,14 @@ export function ChatPage() {
   const { selectedBook } = useBooks();
   const desktop = useMediaQuery("(min-width: 1200px)");
   const [closedBookId, setClosedBookId] = useState<string>();
-  const previewOpen = Boolean(selectedBook && closedBookId !== selectedBook.id);
+  const [mobilePreviewActivated, setMobilePreviewActivated] = useState(false);
+  const previewOpen = Boolean(
+    selectedBook && closedBookId !== selectedBook.id && (desktop || mobilePreviewActivated),
+  );
   const showDesktopPreview = desktop && previewOpen;
 
   function togglePreview() {
+    setMobilePreviewActivated(true);
     setClosedBookId(previewOpen ? selectedBook?.id : undefined);
   }
 
@@ -35,7 +39,10 @@ export function ChatPage() {
             <ChatSession
               key={session}
               onTogglePreview={togglePreview}
-              onBookSelected={() => setClosedBookId(undefined)}
+              onBookSelected={() => {
+                setClosedBookId(undefined);
+                setMobilePreviewActivated(true);
+              }}
               previewOpen={previewOpen}
             />
           </div>
@@ -60,7 +67,10 @@ export function ChatPage() {
       {selectedBook && (
         <Sheet
           open={!desktop && previewOpen}
-          onOpenChange={(open) => setClosedBookId(open ? undefined : selectedBook.id)}
+          onOpenChange={(open) => {
+            setMobilePreviewActivated(open);
+            setClosedBookId(open ? undefined : selectedBook.id);
+          }}
         >
           <SheetContent
             side="right"

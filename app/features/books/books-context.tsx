@@ -33,7 +33,9 @@ export function BooksProvider({ children }: { children: ReactNode }) {
     <BooksContext.Provider
       value={{
         books,
-        selectedBook: books.find((book) => book.id === selectedId),
+        selectedBook:
+          books.find((book) => book.id === selectedId) ??
+          books.find((book) => book.status === "uploaded"),
         selectBook: setSelectedId,
         loading: library.isPending,
         error: library.error,
