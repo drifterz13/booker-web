@@ -57,7 +57,7 @@ export default function PdfReader({
     <>
       <div
         aria-label="PDF controls"
-        className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-white px-3 py-2"
+        className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-background px-3 py-2"
       >
         <div className="flex items-center gap-1">
           <Button
@@ -92,7 +92,7 @@ export default function PdfReader({
           >
             <ZoomOut className="size-4" />
           </Button>
-          <span className="min-w-10 text-center text-[11px] text-muted-foreground">
+          <span className="min-w-10 text-center text-caption text-muted-foreground">
             {Math.round(zoom * 100)}%
           </span>
           <Button
@@ -126,7 +126,7 @@ export default function PdfReader({
         style={{ scrollbarGutter: "stable" }}
       >
         {error ? (
-          <div role="alert" className="text-sm text-destructive">
+          <div role="alert" className="text-sm text-danger">
             <p>{error}</p>
             {onRetry && (
               <Button variant="outline" className="mt-3" onClick={onRetry}>
@@ -148,12 +148,12 @@ export default function PdfReader({
               setError("This PDF is password protected. Select an unlocked copy to preview it.")
             }
             loading={
-              <div className="relative aspect-[612/792] w-full bg-white shadow-sm">
+              <div className="relative aspect-[612/792] w-full bg-background shadow-sm">
                 <PdfPageLoading />
               </div>
             }
             error={
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="text-sm text-danger">
                 {error ?? "This PDF could not be opened."}
               </p>
             }

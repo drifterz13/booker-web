@@ -13,17 +13,18 @@ export function BooksPage() {
     refetchInterval: (query) =>
       query.state.data?.some(
         (book) =>
-          book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
+          book.status === "uploading" ||
+          (book.status === "uploaded" && !book.active_index_id),
       )
         ? 3_000
         : false,
   });
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-12 sm:px-10">
+    <section className="mx-auto w-full max-w-5xl px-page-gutter py-12 sm:px-page-gutter-wide">
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="mb-2 text-xs font-medium uppercase tracking-overline text-muted-foreground">
             Your reading space
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">My books</h1>
@@ -31,13 +32,17 @@ export function BooksPage() {
             A place for your books, and the questions they inspire.
           </p>
         </div>
-        <BookUpload />
+        <div className="flex justify-end">
+          <BookUpload />
+        </div>
       </div>
       {books.isPending && (
-        <output className="mt-10 text-sm text-muted-foreground">Loading your books…</output>
+        <output className="mt-section-gap text-sm text-muted-foreground">
+          Loading your books…
+        </output>
       )}
       {books.isError && (
-        <div role="alert" className="mt-10 text-sm text-destructive">
+        <div role="alert" className="mt-section-gap text-sm text-danger">
           <p>{books.error.message}</p>
           <Button
             variant="outline"
@@ -50,7 +55,7 @@ export function BooksPage() {
         </div>
       )}
       {books.data && books.data.length === 0 && (
-        <div className="mt-14 flex flex-col items-center rounded-2xl border border-dashed px-6 py-20 text-center">
+        <div className="mt-section-gap flex flex-col items-center rounded-2xl border border-dashed px-6 py-20 text-center">
           <div className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary">
             <BookOpen className="size-6" />
           </div>
@@ -65,7 +70,7 @@ export function BooksPage() {
         </div>
       )}
       {books.data && books.data.length > 0 && (
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-section-gap grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {books.data.map((book) => (
             <BookCard key={book.id} book={book} />
           ))}
@@ -76,14 +81,22 @@ export function BooksPage() {
           <Button
             variant="outline"
             disabled={offset === 0 || books.isFetching}
-            onClick={() => setOffset((value) => Math.max(0, value - BOOK_PAGE_SIZE))}
+            onClick={() =>
+              setOffset((value) => Math.max(0, value - BOOK_PAGE_SIZE))
+            }
           >
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">Page {offset / BOOK_PAGE_SIZE + 1}</span>
+          <span className="text-sm text-muted-foreground">
+            Page {offset / BOOK_PAGE_SIZE + 1}
+          </span>
           <Button
             variant="outline"
-            disabled={books.isFetching || !books.data || books.data.length < BOOK_PAGE_SIZE}
+            disabled={
+              books.isFetching ||
+              !books.data ||
+              books.data.length < BOOK_PAGE_SIZE
+            }
             onClick={() => setOffset((value) => value + BOOK_PAGE_SIZE)}
           >
             Next

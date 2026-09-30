@@ -13,8 +13,8 @@ export function BookPreview({ book, onClose }: { book: BookSummary; onClose: () 
   const pdf = useQuery(bookPdfOptions(book.id));
 
   return (
-    <section aria-label="PDF preview" className="flex h-full min-h-0 flex-col bg-sidebar">
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
+    <section aria-label="PDF preview" className="flex h-full min-h-0 flex-col bg-surface-subtle">
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
         <FileText className="size-4 shrink-0 text-primary" />
         <h2 className="min-w-0 flex-1 truncate text-sm font-medium" title={book.filename}>
           {book.filename}
@@ -26,7 +26,7 @@ export function BookPreview({ book, onClose }: { book: BookSummary; onClose: () 
       {pdf.isFetching || pdf.isPending ? (
         <PdfReaderLoading />
       ) : pdf.isError ? (
-        <div role="alert" className="p-4 text-sm text-destructive">
+        <div role="alert" className="p-4 text-sm text-danger">
           <p>{pdf.error.message}</p>
           <Button variant="outline" className="mt-3" onClick={() => void pdf.refetch()}>
             Retry PDF preview

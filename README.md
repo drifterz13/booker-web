@@ -4,6 +4,8 @@ A web app for uploading PDF books, browsing your library, and previewing books
 alongside chat. Library and PDF preview use the Booker API; AI answers are not
 connected yet.
 
+See [DESIGN.md](DESIGN.md) for the design tokens, shared components, and usage rules.
+
 ## Stack
 
 - React, TypeScript, React Router, and Vite

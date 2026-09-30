@@ -24,7 +24,7 @@ const suggestions = [
 
 export function PromptSuggestions({ onSelect }: { onSelect: (prompt: string) => void }) {
   return (
-    <div className="mt-6">
+    <div className="mt-block-gap">
       <p className="mb-3 text-xs text-muted-foreground">A few places to start</p>
       <div className="grid gap-3 @min-[560px]:grid-cols-3">
         {suggestions.map(({ icon: Icon, title, description, prompt }) => (
@@ -40,7 +40,7 @@ export function PromptSuggestions({ onSelect }: { onSelect: (prompt: string) => 
             </div>
             <div>
               <span className="block text-xs font-medium">{title}</span>
-              <span className="mt-1 block text-[11px] leading-4 text-muted-foreground">
+              <span className="mt-1 block text-caption leading-4 text-muted-foreground">
                 {description}
               </span>
             </div>

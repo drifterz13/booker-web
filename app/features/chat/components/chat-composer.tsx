@@ -40,7 +40,7 @@ export function ChatComposer({
           event.preventDefault();
           submit();
         }}
-        className="rounded-2xl border bg-white p-4 shadow-[0_2px_12px_-5px_#00000012] transition-shadow focus-within:border-primary/40 focus-within:shadow-[0_0_0_3px_#3d56490b] sm:p-5"
+        className="rounded-2xl border bg-background p-4 shadow-surface transition-shadow focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/5 sm:p-5"
       >
         <Textarea
           ref={textareaRef}
@@ -86,7 +86,7 @@ export function ChatComposer({
           )}
         </div>
       </form>
-      <p id={hintId} className="mt-3 text-center text-[11px] leading-5 text-muted-foreground">
+      <p id={hintId} className="mt-3 text-center text-caption text-muted-foreground">
         {bookName && !ready
           ? "This book is not ready for chat yet."
           : bookName

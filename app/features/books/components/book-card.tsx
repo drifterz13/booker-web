@@ -14,8 +14,8 @@ export function BookCard({ book }: { book: BookSummary }) {
   const [failedThumbnail, setFailedThumbnail] = useState<string>();
 
   return (
-    <article className="flex flex-col rounded-xl border bg-white p-5 transition-shadow hover:shadow-sm">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <article className="flex flex-col rounded-xl border bg-background p-5 transition-shadow hover:shadow-sm">
+      <div className="mb-block-gap flex items-start justify-between gap-4">
         <div className="flex h-32 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary text-primary">
           {book.thumbnail_url && failedThumbnail !== book.thumbnail_url ? (
             <img
@@ -29,7 +29,7 @@ export function BookCard({ book }: { book: BookSummary }) {
             <BookOpen className="size-8" />
           )}
         </div>
-        <span className="rounded-md bg-sidebar px-2 py-1 text-xs text-muted-foreground">
+        <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-muted-foreground">
           {bookStatus(book)}
         </span>
       </div>

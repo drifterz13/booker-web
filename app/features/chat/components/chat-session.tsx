@@ -27,7 +27,7 @@ export function ChatSession({
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="flex items-center justify-between gap-3 px-6 py-5 sm:px-9">
+      <header className="flex items-center justify-between gap-3 px-page-gutter py-5 sm:px-page-gutter-wide">
         <BookSelector
           onChange={() => {
             setDraft("");
@@ -51,14 +51,14 @@ export function ChatSession({
             </span>
           </Button>
         ) : (
-          <span className="rounded-full border px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground">
+          <span className="rounded-full border px-2.5 py-1 text-overline font-medium tracking-overline text-muted-foreground">
             PREVIEW
           </span>
         )}
       </header>
       <section
         aria-label="Book chat"
-        className={`mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 pb-10 @min-[640px]:px-9 ${hasMessages ? "justify-end" : "justify-center pt-10 @min-[800px]:pt-0"}`}
+        className={`mx-auto flex w-full max-w-3xl flex-1 flex-col px-page-gutter pb-section-gap @min-[640px]:px-page-gutter-wide ${hasMessages ? "justify-end" : "justify-center pt-section-gap @min-[800px]:pt-0"}`}
       >
         {hasMessages ? <MessageList messages={messages} busy={busy} /> : <ChatWelcome />}
         {busy && (
@@ -74,7 +74,7 @@ export function ChatSession({
         {error && (
           <div
             role="alert"
-            className="mb-4 flex items-center justify-between gap-3 text-sm text-destructive"
+            className="mb-4 flex items-center justify-between gap-3 text-sm text-danger"
           >
             <p>{error.message}</p>
             <Button
@@ -110,7 +110,7 @@ export function ChatSession({
           </>
         )}
       </section>
-      <footer className="px-6 pb-5 text-center text-[11px] text-muted-foreground">
+      <footer className="px-page-gutter pb-5 text-center text-caption text-muted-foreground sm:px-page-gutter-wide">
         Made for thoughtful reading.
       </footer>
     </div>

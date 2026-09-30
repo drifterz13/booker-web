@@ -3,13 +3,21 @@
 
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Numeric p-/m-/gap- utilities use Tailwind's 4px scale; name shared layout roles here. */
+  /* Horizontal inset for page content on narrow screens. */
+  --spacing-page-gutter: 1.5rem;
+  /* Horizontal inset for page content on wider screens. */
+  --spacing-page-gutter-wide: 2.5rem;
+  /* Separation between major blocks within a section. */
+  --spacing-block-gap: 1.5rem;
+  /* Separation between a page heading and its content or sidebar groups. */
+  --spacing-section-gap: 2.5rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--foreground);
-  --color-muted: var(--secondary);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--secondary);
   --color-accent-foreground: var(--foreground);
@@ -18,8 +26,16 @@
   --color-border: var(--border);
   --color-input: var(--border);
   --color-ring: var(--primary);
-  --color-destructive: #b42318;
-  --color-sidebar: #f8f8f7;
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-overlay: var(--overlay);
+  --text-caption: 0.6875rem;
+  --text-caption--line-height: 1.25rem;
+  --text-overline: 0.625rem;
+  --text-overline--line-height: 1rem;
+  --tracking-overline: 0.16em;
+  --shadow-surface: 0 2px 12px -5px rgb(0 0 0 / 7%);
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -33,8 +49,13 @@
   --primary: #3d5649;
   --primary-foreground: #ffffff;
   --secondary: #f0f2ef;
-  --muted-foreground: #727671;
+  --muted-foreground: #686d67;
   --border: #e5e7e3;
+  --surface-subtle: #f8f8f7;
+  --danger: #b42318;
+  --danger-foreground: #ffffff;
+  --selection: #dce7de;
+  --overlay: rgb(0 0 0 / 50%);
 }
 
 @layer base {
@@ -43,12 +64,23 @@
   }
   body {
     @apply m-0 bg-background font-sans text-foreground antialiased;
+    caret-color: var(--primary);
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]) {
     cursor: pointer;
   }
   ::selection {
-    background: #dce7de;
+    background: var(--selection);
+  }
+  :focus-visible {
+    outline-color: var(--primary);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-md);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
   }
 }

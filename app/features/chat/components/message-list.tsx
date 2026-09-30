@@ -31,7 +31,7 @@ export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy:
 
   return (
     <div
-      className="space-y-6 py-8"
+      className="space-y-block-gap py-8"
       role="log"
       aria-label="Conversation"
       aria-live="polite"
@@ -42,7 +42,7 @@ export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy:
           <div
             className={cn(
               "min-w-0 max-w-[90%] rounded-2xl px-5 py-3 text-sm leading-7 break-words",
-              message.role === "user" ? "bg-secondary" : "bg-sidebar",
+              message.role === "user" ? "bg-secondary" : "bg-surface-subtle",
             )}
           >
             <span className="sr-only">{message.role === "user" ? "You" : "Booker"}: </span>

@@ -19,7 +19,7 @@ export function AppShell() {
     <div className="flex h-dvh overflow-hidden">
       <a
         href="#main-content"
-        className="sr-only fixed top-2 left-2 z-60 rounded-md bg-white p-3 focus:not-sr-only"
+        className="sr-only fixed top-2 left-2 z-60 rounded-md bg-background p-3 focus:not-sr-only"
       >
         Skip to content
       </a>

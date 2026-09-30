@@ -63,11 +63,11 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
     <div
       ref={frameRef}
       aria-label={`PDF page ${pageNumber}`}
-      className="relative shrink-0 bg-white shadow-sm"
+      className="relative shrink-0 bg-background shadow-sm"
       style={{ width, aspectRatio: aspectRatio ?? 612 / 792 }}
     >
       {error ? (
-        <p role="alert" className="p-4 text-sm text-destructive">
+        <p role="alert" className="p-4 text-sm text-danger">
           This page could not be displayed.
         </p>
       ) : (

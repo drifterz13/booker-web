@@ -52,7 +52,7 @@ export function ChatPage() {
             <ResizableHandle
               withHandle
               aria-label="Resize chat and PDF preview"
-              className="w-2 bg-sidebar hover:bg-secondary"
+              className="w-2 bg-surface-subtle hover:bg-secondary"
             />
             <ResizablePanel id="pdf" defaultSize="45%" minSize="320px">
               <BookPreview

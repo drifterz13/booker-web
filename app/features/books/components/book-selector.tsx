@@ -25,7 +25,7 @@ export function BookSelector({ onChange }: { onChange: () => void }) {
       >
         <SelectTrigger
           aria-label="Book to chat with"
-          className="min-w-0 max-w-[min(65vw,360px)] rounded-lg border-none bg-sidebar shadow-none"
+          className="min-w-0 max-w-[min(65vw,360px)] rounded-lg border-none bg-surface-subtle shadow-none"
         >
           <BookOpen className="size-4 text-primary" />
           <SelectValue
@@ -48,7 +48,7 @@ export function BookSelector({ onChange }: { onChange: () => void }) {
         </SelectContent>
       </Select>
       {error && (
-        <div role="alert" className="mt-2 text-xs text-destructive">
+        <div role="alert" className="mt-2 text-xs text-danger">
           Could not load books.{" "}
           <Button variant="ghost" size="sm" onClick={retry}>
             Retry

@@ -26,7 +26,7 @@ export function AppSidebar({
     <aside
       id={id}
       aria-label="Main sidebar"
-      className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r bg-sidebar p-4 md:w-56 lg:w-60"
+      className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r bg-surface-subtle p-4 md:w-56 lg:w-60"
     >
       <div className="flex items-center justify-between px-2 pt-2">
         <Link
@@ -35,7 +35,7 @@ export function AppSidebar({
           aria-label="Booker home"
           onClick={onNavigate}
         >
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-white">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <BookOpen className="size-4" strokeWidth={1.7} />
           </span>
           <span className="text-lg font-semibold tracking-tight">
@@ -46,7 +46,7 @@ export function AppSidebar({
           <PanelLeftClose className="size-4 text-muted-foreground" />
         </Button>
       </div>
-      <nav aria-label="Main navigation" className="mt-11 space-y-1">
+      <nav aria-label="Main navigation" className="mt-section-gap space-y-1">
         <NavLink
           to="/"
           end
@@ -67,8 +67,8 @@ export function AppSidebar({
           </span>
         </NavLink>
       </nav>
-      <div className="mt-9 border-t px-3 pt-5">
-        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+      <div className="mt-section-gap border-t px-3 pt-5">
+        <p className="text-overline font-medium uppercase tracking-overline text-muted-foreground">
           Your library
         </p>
         {books.length === 0 ? (
@@ -96,7 +96,7 @@ export function AppSidebar({
       </div>
       <div className="mt-auto px-3 pt-12 pb-2">
         <p className="text-xs font-medium">Read. Ask. Discover.</p>
-        <p className="mt-1.5 text-[11px] leading-5 text-muted-foreground">
+        <p className="mt-1.5 text-caption text-muted-foreground">
           A quieter space to explore your books.
         </p>
       </div>

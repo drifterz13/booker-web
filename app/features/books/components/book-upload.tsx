@@ -53,7 +53,7 @@ export function BookUpload() {
         )}
       </div>
       {upload.error && upload.phase === "error" && (
-        <p role="alert" className="mt-2 text-sm text-destructive">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {upload.error}
         </p>
       )}

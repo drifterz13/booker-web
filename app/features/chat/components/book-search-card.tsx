@@ -18,14 +18,14 @@ export function BookSearchCard({ part, busy }: { part: SearchPart; busy: boolean
         : "Book search stopped";
 
   return (
-    <details className="my-2 rounded-lg border bg-white/60 px-3 py-2 text-xs">
+    <details className="my-2 rounded-lg border bg-background/60 px-3 py-2 text-xs">
       <summary className="cursor-pointer text-muted-foreground">
         <Search aria-hidden className="mr-2 inline size-3.5" />
         {label}
       </summary>
       <div className="mt-3 space-y-3">
         {part.input?.query && <p className="break-words">{part.input.query}</p>}
-        {part.state === "output-error" && <p className="text-destructive">{part.errorText}</p>}
+        {part.state === "output-error" && <p className="text-danger">{part.errorText}</p>}
         {passages.map((passage) => (
           <blockquote
             key={passage.chunk_id}
