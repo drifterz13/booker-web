@@ -11,7 +11,16 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { QueryProvider } from "./shared/providers/query-provider";
 
+export const meta: Route.MetaFunction = () => [
+  { title: "Booker" },
+  {
+    name: "description",
+    content: "Read, explore, and ask questions about books in your library.",
+  },
+];
+
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -66,7 +75,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? "404" : "Error";
     details =
-      error.status === 404 ? "The requested page could not be found." : error.statusText || details;
+      error.status === 404
+        ? "The requested page could not be found."
+        : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
