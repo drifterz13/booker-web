@@ -1,11 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "~/shared/lib/utils";
 import type { ChatMessage } from "../types";
 import { BookSearchCard } from "./book-search-card";
 
-export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy: boolean }) {
+export function MessageList({
+  messages,
+  busy,
+  children,
+}: {
+  messages: ChatMessage[];
+  busy: boolean;
+  children?: ReactNode;
+}) {
   const endRef = useRef<HTMLDivElement>(null);
   const followRef = useRef(true);
 
@@ -31,7 +39,7 @@ export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy:
 
   return (
     <div
-      className="space-y-block-gap py-8"
+      className="space-y-6 py-5"
       role="log"
       aria-label="Conversation"
       aria-live="polite"
@@ -41,8 +49,10 @@ export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy:
         <div key={message.id} className={cn("flex", message.role === "user" && "justify-end")}>
           <div
             className={cn(
-              "min-w-0 max-w-[90%] rounded-2xl px-5 py-3 text-sm leading-7 break-words",
-              message.role === "user" ? "bg-secondary" : "bg-surface-subtle",
+              "min-w-0 text-base leading-7 break-words",
+              message.role === "user"
+                ? "max-w-[85%] rounded-2xl bg-secondary px-4 py-2"
+                : "w-full max-w-[72ch]",
             )}
           >
             <span className="sr-only">{message.role === "user" ? "You" : "Booker"}: </span>
@@ -76,6 +86,7 @@ export function MessageList({ messages, busy }: { messages: ChatMessage[]; busy:
           </div>
         </div>
       ))}
+      {children}
       <div ref={endRef} />
     </div>
   );

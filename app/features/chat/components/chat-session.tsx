@@ -24,10 +24,41 @@ export function ChatSession({
   const busy = status === "submitted" || status === "streaming";
   const ready = Boolean(selectedBook?.active_index_id);
   const hasMessages = messages.length > 0;
+  const hasStatus = busy || (selectedBook && !ready) || error;
+  const statusContent = (
+    <>
+      {busy && (
+        <output className="block text-sm text-muted-foreground">
+          {progress ?? (status === "submitted" ? "Thinking…" : "Answering…")}
+        </output>
+      )}
+      {selectedBook && !ready && (
+        <Button variant="ghost" size="sm" onClick={refreshBooks} className="self-start">
+          Check book readiness
+        </Button>
+      )}
+      {error && (
+        <div role="alert" className="flex items-center justify-between gap-3 text-sm text-danger">
+          <p>{error.message}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void regenerate();
+            }}
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+    </>
+  );
 
   return (
-    <div className="flex min-h-full flex-col">
-      <header className="flex items-center justify-between gap-3 px-page-gutter py-5 sm:px-page-gutter-wide">
+    <div
+      className={`flex h-full min-h-0 flex-col ${hasMessages ? "overflow-hidden" : "overflow-y-auto"}`}
+    >
+      <header className="flex shrink-0 items-center justify-between gap-3 px-page-gutter py-3 sm:px-page-gutter-wide">
         <BookSelector
           onChange={() => {
             setDraft("");
@@ -58,35 +89,19 @@ export function ChatSession({
       </header>
       <section
         aria-label="Book chat"
-        className={`mx-auto flex w-full max-w-3xl flex-1 flex-col px-page-gutter pb-section-gap @min-[640px]:px-page-gutter-wide ${hasMessages ? "justify-end" : "justify-center pt-section-gap @min-[800px]:pt-0"}`}
+        className={`mx-auto flex w-full max-w-4xl flex-1 flex-col px-page-gutter pb-4 @min-[640px]:px-page-gutter-wide ${hasMessages ? "min-h-0" : "justify-center pt-section-gap @min-[800px]:pt-0"}`}
       >
-        {hasMessages ? <MessageList messages={messages} busy={busy} /> : <ChatWelcome />}
-        {busy && (
-          <output className="mb-4 block text-sm text-muted-foreground">
-            {progress ?? (status === "submitted" ? "Thinking…" : "Answering…")}
-          </output>
-        )}
-        {selectedBook && !ready && (
-          <Button variant="ghost" size="sm" onClick={refreshBooks} className="mb-3 self-start">
-            Check book readiness
-          </Button>
-        )}
-        {error && (
-          <div
-            role="alert"
-            className="mb-4 flex items-center justify-between gap-3 text-sm text-danger"
-          >
-            <p>{error.message}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void regenerate();
-              }}
-            >
-              Retry
-            </Button>
+        {hasMessages ? (
+          <div data-chat-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-4">
+            <MessageList messages={messages} busy={busy}>
+              {statusContent}
+            </MessageList>
           </div>
+        ) : (
+          <>
+            <ChatWelcome />
+            {hasStatus && <div className="mb-4 flex flex-col gap-3">{statusContent}</div>}
+          </>
         )}
         <ChatComposer
           value={draft}
@@ -110,9 +125,6 @@ export function ChatSession({
           </>
         )}
       </section>
-      <footer className="px-page-gutter pb-5 text-center text-caption text-muted-foreground sm:px-page-gutter-wide">
-        Made for thoughtful reading.
-      </footer>
     </div>
   );
 }

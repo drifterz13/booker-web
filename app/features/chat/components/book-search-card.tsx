@@ -18,7 +18,7 @@ export function BookSearchCard({ part, busy }: { part: SearchPart; busy: boolean
         : "Book search stopped";
 
   return (
-    <details className="my-2 rounded-lg border bg-background/60 px-3 py-2 text-xs">
+    <details className="my-3 border-b py-2 text-xs">
       <summary className="cursor-pointer text-muted-foreground">
         <Search aria-hidden className="mr-2 inline size-3.5" />
         {label}

@@ -1,4 +1,4 @@
-import { ArrowUp, BookOpen, Square } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 import { useId, useRef } from "react";
 import { Button } from "~/shared/components/ui/button";
 import { Textarea } from "~/shared/components/ui/textarea";
@@ -40,7 +40,7 @@ export function ChatComposer({
           event.preventDefault();
           submit();
         }}
-        className="rounded-2xl border bg-background p-4 shadow-surface transition-shadow focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/5 sm:p-5"
+        className="flex items-end gap-3 rounded-2xl border bg-background p-3 shadow-surface transition-shadow focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/5 sm:px-4"
       >
         <Textarea
           ref={textareaRef}
@@ -50,7 +50,7 @@ export function ChatComposer({
           aria-label="Your question"
           aria-describedby={hintId}
           placeholder="What would you like to know about your book?"
-          className="min-h-24 max-h-64 resize-none border-0 p-0 text-base shadow-none focus-visible:ring-0 md:text-base"
+          className="min-h-9 max-h-40 min-w-0 flex-1 resize-none border-0 px-0 py-1 text-base leading-6 shadow-none focus-visible:ring-0 md:text-base"
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault();
@@ -58,35 +58,34 @@ export function ChatComposer({
             }
           }}
         />
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-            <BookOpen className="size-3.5 shrink-0" />
-            <span className="truncate">{bookName ?? "Add a book to get started"}</span>
-          </span>
-          {busy ? (
-            <Button
-              type="button"
-              size="icon"
-              aria-label="Stop response"
-              onClick={onStop}
-              className="size-9 rounded-lg"
-            >
-              <Square className="size-4" />
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              size="icon"
-              disabled={!canSend}
-              aria-label="Send message"
-              className="size-9 rounded-lg"
-            >
-              <ArrowUp className="size-4" />
-            </Button>
-          )}
-        </div>
+        {busy ? (
+          <Button
+            type="button"
+            size="icon"
+            aria-label="Stop response"
+            onClick={onStop}
+            className="size-9 shrink-0 rounded-lg"
+          >
+            <Square className="size-4" />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            size="icon"
+            disabled={!canSend}
+            aria-label="Send message"
+            className="size-9 shrink-0 rounded-lg"
+          >
+            <ArrowUp className="size-4" />
+          </Button>
+        )}
       </form>
-      <p id={hintId} className="mt-3 text-center text-caption text-muted-foreground">
+      <p
+        id={hintId}
+        className={
+          bookName && ready ? "sr-only" : "mt-2 text-center text-caption text-muted-foreground"
+        }
+      >
         {bookName && !ready
           ? "This book is not ready for chat yet."
           : bookName

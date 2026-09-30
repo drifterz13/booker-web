@@ -35,7 +35,7 @@ export function ChatPage() {
           defaultSize={showDesktopPreview ? "55%" : "100%"}
           minSize={showDesktopPreview ? "360px" : "0%"}
         >
-          <div data-chat-scroll className="@container h-full overflow-y-auto">
+          <div className="@container h-full min-h-0">
             <ChatSession
               key={session}
               onTogglePreview={togglePreview}

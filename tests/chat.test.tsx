@@ -146,6 +146,14 @@ it("stops a streaming answer and clears the conversation when switching books", 
   await selectBook(user);
   await typeQuestion(user, "Help me read{Enter}");
   expect(await screen.findByText("slowly", { selector: "strong" })).toBeVisible();
+
+  const conversationScroll = screen.getByRole("log").closest("[data-chat-scroll]");
+
+  expect(conversationScroll).toContainElement(screen.getByRole("log"));
+  expect(conversationScroll).toContainElement(screen.getByText("Answering…"));
+  expect(conversationScroll).not.toContainElement(
+    screen.getByRole("textbox", { name: "Your question" }),
+  );
   await user.click(screen.getByRole("button", { name: "Stop response" }));
   await waitFor(() =>
     expect(screen.queryByRole("button", { name: "Stop response" })).not.toBeInTheDocument(),
