@@ -1,11 +1,12 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Tooltip } from "radix-ui";
 import { cn } from "~/shared/lib/utils";
-import { Button } from "~/shared/components/ui/button";
-import { citationDescription, citationPageLabel, messageCitations } from "../citations";
+import { messageCitations } from "../citations";
 import type { ChatMessage, CitationSource } from "../types";
 import { BookSearchCard } from "./book-search-card";
+import { CitationLink } from "./citation-link";
 
 export function MessageList({
   messages,
@@ -42,87 +43,84 @@ export function MessageList({
   }, [messages]);
 
   return (
-    <div
-      className="space-y-6 py-5"
-      role="log"
-      aria-label="Conversation"
-      aria-live="polite"
-      aria-busy={busy}
-    >
-      {messages.map((message, messageIndex) => {
-        const sources = messageCitations(message);
+    <Tooltip.Provider delayDuration={200}>
+      <div
+        className="space-y-6 py-5"
+        role="log"
+        aria-label="Conversation"
+        aria-live="polite"
+        aria-busy={busy}
+      >
+        {messages.map((message, messageIndex) => {
+          const sources = messageCitations(message);
+          const citationNumbers = new Map(
+            Array.from(sources.keys(), (id, index) => [id, index + 1]),
+          );
 
-        return (
-          <div key={message.id} className={cn("flex", message.role === "user" && "justify-end")}>
-            <div
-              className={cn(
-                "min-w-0 text-base leading-7 break-words",
-                message.role === "user"
-                  ? "max-w-[85%] rounded-2xl bg-secondary px-4 py-2"
-                  : "w-full max-w-[72ch]",
-              )}
-            >
-              <span className="sr-only">{message.role === "user" ? "You" : "Booker"}: </span>
-              {message.parts.map((part, index) => {
-                if (part.type === "text") {
-                  return message.role === "user" ? (
-                    <p key={index} className="whitespace-pre-wrap">
-                      {part.text}
-                    </p>
-                  ) : (
-                    <div key={index} className="chat-markdown">
-                      <Markdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          a: ({ href, children }) => {
-                            if (!href?.startsWith("#cite-")) return <a href={href}>{children}</a>;
-
-                            const id = /^#cite-([A-Za-z0-9_-]+)$/.exec(href)?.[1];
-                            const source = id ? sources.get(id) : undefined;
-
-                            if (!source || !onCitation) return <>{children}</>;
-
-                            const description = citationDescription(source);
-
-                            return (
-                              <Button
-                                type="button"
-                                variant="link"
-                                size="xs"
-                                className="inline h-auto rounded-sm p-0 align-baseline text-base leading-[inherit] font-semibold underline decoration-primary/40 decoration-1 underline-offset-2 hover:decoration-primary"
-                                title={description}
-                                aria-label={`Open citation: ${description}`}
-                                onClick={() => onCitation(source)}
-                              >
-                                {citationPageLabel(source)}
-                              </Button>
-                            );
-                          },
-                        }}
-                      >
+          return (
+            <div key={message.id} className={cn("flex", message.role === "user" && "justify-end")}>
+              <div
+                className={cn(
+                  "min-w-0 text-base leading-7 break-words",
+                  message.role === "user"
+                    ? "max-w-[85%] rounded-2xl bg-secondary px-4 py-2"
+                    : "w-full max-w-[72ch]",
+                )}
+              >
+                <span className="sr-only">{message.role === "user" ? "You" : "Booker"}: </span>
+                {message.parts.map((part, index) => {
+                  if (part.type === "text") {
+                    return message.role === "user" ? (
+                      <p key={index} className="whitespace-pre-wrap">
                         {part.text}
-                      </Markdown>
-                    </div>
-                  );
-                }
+                      </p>
+                    ) : (
+                      <div key={index} className="chat-markdown">
+                        <Markdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            a: ({ href, children }) => {
+                              if (!href?.startsWith("#cite-")) return <a href={href}>{children}</a>;
 
-                if (part.type === "tool-search_book")
-                  return (
-                    <BookSearchCard
-                      key={part.toolCallId}
-                      part={part}
-                      busy={busy && messageIndex === messages.length - 1}
-                    />
-                  );
+                              const id = /^#cite-([A-Za-z0-9_-]+)$/.exec(href)?.[1];
+                              const source = id ? sources.get(id) : undefined;
 
-                return null;
-              })}
+                              if (!source || !onCitation) return <>{children}</>;
+
+                              return (
+                                <CitationLink
+                                  source={source}
+                                  number={citationNumbers.get(source.id)!}
+                                  onCitation={onCitation}
+                                />
+                              );
+                            },
+                          }}
+                        >
+                          {part.text}
+                        </Markdown>
+                      </div>
+                    );
+                  }
+
+                  if (part.type === "tool-search_book")
+                    return (
+                      <BookSearchCard
+                        key={part.toolCallId}
+                        part={part}
+                        busy={busy && messageIndex === messages.length - 1}
+                      />
+                    );
+
+                  return null;
+                })}
+              </div>
             </div>
-          </div>
-        );
-      })}
-      {children}
-      <div ref={endRef} />
-    </div>
+          );
+        })}
+        {children}
+        <div ref={endRef} />
+      </div>
+    </Tooltip.Provider>
   );
 }

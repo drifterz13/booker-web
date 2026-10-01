@@ -94,6 +94,19 @@
 }
 
 @layer components {
+  .citation-link {
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .citation-link:hover,
+  .citation-link:focus-visible,
+  .citation-link[data-state="delayed-open"],
+  .citation-link[data-state="instant-open"] {
+    @apply bg-secondary no-underline;
+  }
+
   .chat-markdown p {
     @apply my-2;
   }

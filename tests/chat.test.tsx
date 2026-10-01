@@ -241,7 +241,7 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
   await selectBook(user);
   await typeQuestion(user, "How do habits work?{Enter}");
   const citation = await screen.findByRole("button", {
-    name: "Open citation: Pages 2, 3 · Memory",
+    name: "Open citation: Memory (pp. 2-3)",
   });
 
   expect(screen.queryByRole("link", { name: "old" })).not.toBeInTheDocument();
@@ -256,7 +256,7 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
   expect(preview.queryByRole("navigation", { name: "Cited PDF pages" })).not.toBeInTheDocument();
   await user.click(preview.getByRole("button", { name: "Next page" }));
   expect(preview.getByText("3 / 3")).toBeVisible();
-  await user.click(screen.getByRole("button", { name: "Open citation: Pages 2, 3 · Memory" }));
+  await user.click(screen.getByRole("button", { name: "Open citation: Memory (pp. 2-3)" }));
   expect(await preview.findByText("2 / 3")).toBeVisible();
   expect(pdfCalls).toBe(2);
 

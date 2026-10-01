@@ -26,16 +26,17 @@ export function messageCitations(message: ChatMessage) {
 }
 
 export function citationDescription(source: CitationSource) {
-  const pages = `${source.pdf_pages.length === 1 ? "Page" : "Pages"} ${source.pdf_pages.join(", ")}`;
+  const sections = source.section_path.slice(-2).join(" > ");
+  const pages = citationPageLabel(source);
 
-  return [pages, ...source.section_path].join(" · ");
+  return sections ? `${sections} (${pages})` : pages;
 }
 
 export function citationPageLabel(source: CitationSource) {
   const pages = Array.from(new Set(source.pdf_pages));
   const consecutive = pages.every((page, index) => index === 0 || page === pages[index - 1] + 1);
   const label =
-    pages.length > 1 && consecutive ? `${pages[0]}–${pages[pages.length - 1]}` : pages.join(", ");
+    pages.length > 1 && consecutive ? `${pages[0]}-${pages[pages.length - 1]}` : pages.join(", ");
 
   return `${pages.length === 1 ? "p." : "pp."} ${label}`;
 }

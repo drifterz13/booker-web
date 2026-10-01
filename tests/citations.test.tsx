@@ -38,15 +38,91 @@ it("resolves citation IDs within their own message after history round-tripping"
   const user = userEvent.setup();
 
   expect(
-    screen.getByRole("button", { name: "Open citation: Pages 42, 43 · Chapter 3 · Memory" }),
-  ).toHaveTextContent("pp. 42–43");
-  expect(screen.getByRole("button", { name: "Open citation: Page 7" })).toHaveTextContent("p. 7");
+    screen.getByRole("button", { name: "Open citation: Chapter 3 > Memory (pp. 42-43)" }),
+  ).toHaveTextContent("[1]");
+  expect(screen.getByRole("button", { name: "Open citation: p. 7" })).toHaveTextContent("[1]");
   await user.click(
-    screen.getByRole("button", { name: "Open citation: Pages 42, 43 · Chapter 3 · Memory" }),
+    screen.getByRole("button", { name: "Open citation: Chapter 3 > Memory (pp. 42-43)" }),
   );
   expect(onCitation).toHaveBeenLastCalledWith(source);
-  await user.click(screen.getByRole("button", { name: "Open citation: Page 7" }));
+  await user.click(screen.getByRole("button", { name: "Open citation: p. 7" }));
   expect(onCitation).toHaveBeenLastCalledWith(second);
+});
+
+it("shows page and section details on hover and keyboard focus, and dismisses with Escape", async () => {
+  render(
+    <MessageList
+      messages={[answer("first", "Read.[pp. 42–43](#cite-s1)", [source])]}
+      busy={false}
+      onCitation={vi.fn()}
+    />,
+  );
+  const user = userEvent.setup();
+  const citation = screen.getByRole("button");
+
+  expect(citation).toHaveTextContent("[1]");
+  expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  await user.hover(citation);
+  expect(await screen.findByRole("tooltip")).toHaveTextContent("Chapter 3 > Memory (pp. 42-43)");
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  await user.unhover(citation);
+  await user.tab();
+  expect(citation).toHaveFocus();
+  expect(await screen.findByRole("tooltip")).toHaveTextContent("Chapter 3 > Memory (pp. 42-43)");
+});
+
+it("reuses source numbers across text parts and restarts numbering for each answer", () => {
+  const second = { ...source, id: "s2", pdf_pages: [7], section_path: [] };
+  const message = answer("first", "First.[pages](#cite-s1) Next.[pages](#cite-s2)", [
+    source,
+    second,
+  ]);
+
+  message.parts.push({ type: "text", text: "Again.[pages](#cite-s1)" });
+  render(
+    <MessageList
+      messages={[message, answer("second", "Another answer.[pages](#cite-s2)", [second])]}
+      busy={false}
+      onCitation={vi.fn()}
+    />,
+  );
+
+  expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+    "[1]",
+    "[2]",
+    "[1]",
+    "[1]",
+  ]);
+});
+
+it("shows only the last two sections before pages without changing source navigation", async () => {
+  const nestedSource = {
+    ...source,
+    section_path: ["Part 1", "Strategy", "Chapter 3", "Turning disadvantages into advantages"],
+    pdf_pages: [12, 13],
+  };
+  const onCitation = vi.fn();
+
+  render(
+    <MessageList
+      messages={[answer("first", "Read.[1](#cite-s1)", [nestedSource])]}
+      busy={false}
+      onCitation={onCitation}
+    />,
+  );
+  const user = userEvent.setup();
+
+  await user.tab();
+  const tooltip = await screen.findByRole("tooltip");
+
+  expect(tooltip).toHaveTextContent(
+    "Chapter 3 > Turning disadvantages into advantages (pp. 12-13)",
+  );
+  expect(tooltip).not.toHaveTextContent("Part 1");
+  expect(tooltip).not.toHaveTextContent("Strategy");
+  await user.click(screen.getByRole("button"));
+  expect(onCitation).toHaveBeenCalledWith(nestedSource);
 });
 
 it("preserves backend citation punctuation, ordinary links, and code", () => {
@@ -64,12 +140,12 @@ it("preserves backend citation punctuation, ordinary links, and code", () => {
     />,
   );
 
-  expect(screen.getByRole("log")).toHaveTextContent("Read carefully ( pp. 42–43 ) .");
+  expect(screen.getByRole("log")).toHaveTextContent("Read carefully ( [1] ) .");
   expect(screen.getByRole("log")).toHaveTextContent("Keep (this explanation), (website)");
   expect(screen.getByText("( [1](#cite-s1) )", { selector: "code" })).toBeVisible();
 });
 
-it("shows nonconsecutive pages without implying an unsupported page range", () => {
+it("shows nonconsecutive pages in the tooltip without implying a page range", async () => {
   render(
     <MessageList
       messages={[answer("first", "Read.[1](#cite-s1)", [{ ...source, pdf_pages: [24, 26] }])]}
@@ -78,7 +154,10 @@ it("shows nonconsecutive pages without implying an unsupported page range", () =
     />,
   );
 
-  expect(screen.getByRole("button")).toHaveTextContent("pp. 24, 26");
+  const user = userEvent.setup();
+
+  await user.tab();
+  expect(await screen.findByRole("tooltip")).toHaveTextContent("pp. 24, 26");
 });
 
 it("replaces snapshots and keeps unresolved, malformed, and invalid sources as plain text", () => {
@@ -129,7 +208,9 @@ it("tolerates incomplete text and resolves a reference when metadata arrives lat
       onCitation={onCitation}
     />,
   );
-  expect(screen.getByRole("button")).toHaveAttribute("title", "Pages 42, 43 · Chapter 3 · Memory");
+  expect(screen.getByRole("button")).toHaveAccessibleName(
+    "Open citation: Chapter 3 > Memory (pp. 42-43)",
+  );
 });
 
 it("keeps valid sources when another source in the same snapshot is malformed", () => {
@@ -141,7 +222,7 @@ it("keeps valid sources when another source in the same snapshot is malformed", 
   render(<MessageList messages={[message]} busy={false} onCitation={vi.fn()} />);
 
   expect(screen.getAllByRole("button")).toHaveLength(1);
-  expect(screen.getByRole("button")).toHaveTextContent("pp. 42–43");
+  expect(screen.getByRole("button")).toHaveTextContent("[1]");
   expect(screen.queryByRole("link", { name: "bad" })).not.toBeInTheDocument();
   expect(screen.getByRole("log")).toHaveTextContent("bad");
 });
