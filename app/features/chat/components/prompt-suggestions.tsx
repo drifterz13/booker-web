@@ -24,7 +24,7 @@ const suggestions = [
 
 export function PromptSuggestions({ onSelect }: { onSelect: (prompt: string) => void }) {
   return (
-    <div className="mt-block-gap">
+    <div className="chat-suggestions mt-block-gap">
       <p className="mb-3 text-xs text-muted-foreground">A few places to start</p>
       <div className="grid gap-3 @min-[560px]:grid-cols-3">
         {suggestions.map(({ icon: Icon, title, description, prompt }) => (

@@ -2,7 +2,7 @@ import { BookMotion } from "~/shared/components/book-motion";
 
 export function ChatWelcome() {
   return (
-    <div className="mb-block-gap">
+    <div className="chat-welcome mb-block-gap">
       <BookMotion className="mb-4 size-12" />
       <h1 className="text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
         Good to see you.

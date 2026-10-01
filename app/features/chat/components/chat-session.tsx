@@ -91,7 +91,7 @@ export function ChatSession({
       </header>
       <section
         aria-label="Book chat"
-        className={`mx-auto flex w-full max-w-4xl flex-1 flex-col px-page-gutter pb-4 @min-[640px]:px-page-gutter-wide ${hasMessages ? "min-h-0" : "justify-center pt-section-gap @min-[800px]:pt-0"}`}
+        className={`mx-auto flex w-full max-w-4xl flex-1 flex-col px-page-gutter pb-4 @min-[640px]:px-page-gutter-wide ${hasMessages ? "min-h-0" : "chat-intro justify-center pt-section-gap @min-[800px]:pt-0"}`}
       >
         {hasMessages ? (
           <div data-chat-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-4">

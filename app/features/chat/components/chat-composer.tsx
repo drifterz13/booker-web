@@ -34,7 +34,7 @@ export function ChatComposer({
   }
 
   return (
-    <div>
+    <div className="chat-composer">
       <form
         onSubmit={(event) => {
           event.preventDefault();

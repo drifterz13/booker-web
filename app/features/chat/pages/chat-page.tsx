@@ -55,7 +55,7 @@ export function ChatPage() {
   }
 
   return (
-    <div className="h-full min-h-0">
+    <div className="h-full min-h-0 overflow-hidden">
       <ResizablePanelGroup orientation="horizontal" id="book-chat">
         <ResizablePanel
           id="chat"
@@ -84,12 +84,14 @@ export function ChatPage() {
               className="w-2 bg-surface-subtle hover:bg-secondary"
             />
             <ResizablePanel id="pdf" defaultSize="45%" minSize="320px">
-              <BookPreview
-                key={previewBook.id}
-                book={previewBook}
-                citation={activeCitation?.navigation}
-                onClose={() => setClosedBookId(previewBook.id)}
-              />
+              <div className="pdf-preview-enter h-full min-h-0">
+                <BookPreview
+                  key={previewBook.id}
+                  book={previewBook}
+                  citation={activeCitation?.navigation}
+                  onClose={() => setClosedBookId(previewBook.id)}
+                />
+              </div>
             </ResizablePanel>
           </>
         )}
@@ -105,7 +107,7 @@ export function ChatPage() {
           <SheetContent
             side="right"
             showCloseButton={false}
-            className="w-full gap-0 p-0 sm:max-w-none"
+            className="pdf-preview-sheet w-full gap-0 p-0 sm:max-w-none motion-reduce:animate-none"
           >
             <SheetTitle className="sr-only">PDF preview</SheetTitle>
             <SheetDescription className="sr-only">

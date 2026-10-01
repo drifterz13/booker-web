@@ -94,9 +94,6 @@ export function BooksPage() {
           </Button>
         </nav>
       )}
-      <p className="mt-6 text-xs leading-5 text-muted-foreground">
-        PDF files up to 100 MB. Uploaded books are saved to your library.
-      </p>
     </section>
   );
 }
