@@ -1,21 +1,6 @@
+import * as v from "valibot";
+import { CitationEnvelopeSchema, CitationSourceSchema } from "./schemas";
 import type { ChatMessage, CitationSource } from "./types";
-
-function isCitationSource(value: unknown): value is CitationSource {
-  if (!value || typeof value !== "object") return false;
-
-  const source = value as Record<string, unknown>;
-
-  return (
-    [source.id, source.book_id, source.index_id, source.chunk_id].every(
-      (field) => typeof field === "string" && field.trim().length > 0,
-    ) &&
-    Array.isArray(source.pdf_pages) &&
-    source.pdf_pages.length > 0 &&
-    source.pdf_pages.every((page) => Number.isSafeInteger(page) && page > 0) &&
-    Array.isArray(source.section_path) &&
-    source.section_path.every((section) => typeof section === "string")
-  );
-}
 
 export function messageCitations(message: ChatMessage) {
   let sources = new Map<string, CitationSource>();
@@ -24,13 +9,17 @@ export function messageCitations(message: ChatMessage) {
     if (part.type !== "data-citations") continue;
 
     // Each part is a complete snapshot, including an empty or malformed one.
-    const entries: unknown = part.data?.sources;
+    const envelope = v.safeParse(CitationEnvelopeSchema, part.data);
 
-    sources = new Map(
-      Array.isArray(entries)
-        ? entries.filter(isCitationSource).map((source) => [source.id, source])
-        : [],
-    );
+    sources = new Map();
+
+    if (!envelope.success) continue;
+
+    for (const entry of envelope.output.sources) {
+      const result = v.safeParse(CitationSourceSchema, entry);
+
+      if (result.success) sources.set(result.output.id, result.output);
+    }
   }
 
   return sources;

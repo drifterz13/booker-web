@@ -113,6 +113,21 @@ it("keeps a failed question and retries without duplicating it", async () => {
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
 
+it("falls back to a readable chat error when the error body does not match its schema", async () => {
+  server.use(
+    http.post(`${apiUrl}/books/:id/chat`, () =>
+      HttpResponse.json({ detail: ["invalid"] }, { status: 503 }),
+    ),
+  );
+  const { user } = renderChatPage();
+
+  await selectBook(user);
+  await typeQuestion(user, "Help me read{Enter}");
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Could not generate an answer (503). Please try again.",
+  );
+});
+
 it("stops a streaming answer and clears the conversation when switching books", async () => {
   const pending = pendingChatAnswer();
 

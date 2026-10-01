@@ -1,12 +1,21 @@
 import { apiRequest } from "~/shared/api/client";
-import type { CompletedPart, PartUrl, Upload } from "./types";
+import type { CompletedPart, Upload } from "./types";
+import {
+  CompletedUploadSchema,
+  EmptyResponseSchema,
+  PartUrlsSchema,
+  UploadSchema,
+} from "./schemas";
 
 export function startUpload(filename: string) {
-  return apiRequest<Upload>("/uploads", { method: "POST", body: JSON.stringify({ filename }) });
+  return apiRequest("/uploads", UploadSchema, {
+    method: "POST",
+    body: JSON.stringify({ filename }),
+  });
 }
 
 export function signParts(upload: Upload, partNumbers: number[], signal?: AbortSignal) {
-  return apiRequest<PartUrl[]>(`/uploads/${encodeURIComponent(upload.upload_id)}/parts`, {
+  return apiRequest(`/uploads/${encodeURIComponent(upload.upload_id)}/parts`, PartUrlsSchema, {
     method: "POST",
     signal,
     body: JSON.stringify({ object_key: upload.object_key, part_numbers: partNumbers }),
@@ -14,8 +23,9 @@ export function signParts(upload: Upload, partNumbers: number[], signal?: AbortS
 }
 
 export function completeUpload(upload: Upload, parts: CompletedPart[]) {
-  return apiRequest<{ object_key: string; etag: string }>(
+  return apiRequest(
     `/uploads/${encodeURIComponent(upload.upload_id)}/complete`,
+    CompletedUploadSchema,
     {
       method: "POST",
       body: JSON.stringify({ object_key: upload.object_key, parts }),
@@ -24,8 +34,9 @@ export function completeUpload(upload: Upload, parts: CompletedPart[]) {
 }
 
 export function abortUpload(upload: Upload) {
-  return apiRequest<void>(
+  return apiRequest(
     `/uploads/${encodeURIComponent(upload.upload_id)}?object_key=${encodeURIComponent(upload.object_key)}`,
+    EmptyResponseSchema,
     {
       method: "DELETE",
     },

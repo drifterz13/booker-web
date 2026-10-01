@@ -70,10 +70,7 @@ export function MessageList({
                       {part.text}
                     </p>
                   ) : (
-                    <div
-                      key={index}
-                      className="[&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-secondary [&_pre]:p-3 [&_code]:text-xs [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_h1]:text-xl [&_h2]:text-lg [&_h3]:font-semibold [&_table]:block [&_table]:overflow-x-auto [&_td]:border [&_td]:px-2 [&_th]:border [&_th]:px-2"
-                    >
+                    <div key={index} className="chat-markdown">
                       <Markdown
                         remarkPlugins={[remarkGfm]}
                         components={{

@@ -1,12 +1,20 @@
 import { Search } from "lucide-react";
+import * as v from "valibot";
+import { BookSearchInputSchema, BookSearchOutputSchema } from "../schemas";
 import type { ChatMessage } from "../types";
 
 type SearchPart = Extract<ChatMessage["parts"][number], { type: "tool-search_book" }>;
 
 export function BookSearchCard({ part, busy }: { part: SearchPart; busy: boolean }) {
-  const complete = part.state === "output-available";
-  const failed = part.state === "output-error" || part.state === "output-denied";
-  const passages = complete ? part.output.passages : [];
+  const input = v.safeParse(BookSearchInputSchema, part.input);
+  const output =
+    part.state === "output-available"
+      ? v.safeParse(BookSearchOutputSchema, part.output)
+      : undefined;
+  const complete = output?.success === true;
+  const failed =
+    part.state === "output-error" || part.state === "output-denied" || output?.success === false;
+  const passages = output?.success ? output.output.passages : [];
   const label = failed
     ? "Book search failed"
     : complete
@@ -24,7 +32,7 @@ export function BookSearchCard({ part, busy }: { part: SearchPart; busy: boolean
         {label}
       </summary>
       <div className="mt-3 space-y-3">
-        {part.input?.query && <p className="break-words">{part.input.query}</p>}
+        {input.success && input.output.query && <p className="break-words">{input.output.query}</p>}
         {part.state === "output-error" && <p className="text-danger">{part.errorText}</p>}
         {passages.map((passage) => (
           <blockquote

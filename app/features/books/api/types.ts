@@ -1,28 +1,14 @@
-export interface BookSummary {
-  id: string;
-  filename: string;
-  status: "uploading" | "uploaded" | "failed";
-  created_at: string;
-  active_index_id?: string | null;
-  thumbnail_url?: string | null;
-}
+import type * as v from "valibot";
+import type {
+  BookDetailSchema,
+  BookSummarySchema,
+  CompletedPartSchema,
+  PartUrlSchema,
+  UploadSchema,
+} from "./schemas";
 
-export interface BookDetail extends BookSummary {
-  ingestion?: { id: string; status: "building" | "ready" | "failed" } | null;
-}
-
-export interface Upload {
-  upload_id: string;
-  object_key: string;
-}
-
-export interface PartUrl {
-  part_number: number;
-  url: string;
-  expires_in?: number;
-}
-
-export interface CompletedPart {
-  part_number: number;
-  etag: string;
-}
+export type BookSummary = v.InferOutput<typeof BookSummarySchema>;
+export type BookDetail = v.InferOutput<typeof BookDetailSchema>;
+export type Upload = v.InferOutput<typeof UploadSchema>;
+export type PartUrl = v.InferOutput<typeof PartUrlSchema>;
+export type CompletedPart = v.InferOutput<typeof CompletedPartSchema>;

@@ -2,7 +2,9 @@ import { useChat, type UseChatHelpers } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useBooks } from "~/features/books/books-context";
-import { apiBaseUrl, ApiError } from "~/shared/api/client";
+import { apiBaseUrl, readApiError } from "~/shared/api/client";
+import * as v from "valibot";
+import { ChatStatusSchema } from "./schemas";
 import type { ChatMessage } from "./types";
 
 type ChatContextValue = Pick<
@@ -21,13 +23,9 @@ async function chatFetch(input: RequestInfo | URL, init?: RequestInit) {
   const response = await fetch(input, init);
 
   if (!response.ok) {
-    const body = await response.json().catch(() => null);
-
-    throw new ApiError(
-      response.status,
-      typeof body?.detail === "string"
-        ? body.detail
-        : `Could not generate an answer (${response.status}). Please try again.`,
+    throw await readApiError(
+      response,
+      `Could not generate an answer (${response.status}). Please try again.`,
     );
   }
 
@@ -69,7 +67,11 @@ function BookChatProvider({
       fetch: chatFetch,
     }),
     onData: (part) => {
-      if (part.type === "data-status") setProgress({ chatId, message: part.data.message });
+      if (part.type !== "data-status") return;
+
+      const result = v.safeParse(ChatStatusSchema, part.data);
+
+      if (result.success) setProgress({ chatId, message: result.output.message });
     },
     onFinish: () => setProgress(undefined),
     onError: () => setProgress(undefined),

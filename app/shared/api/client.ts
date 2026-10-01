@@ -1,3 +1,6 @@
+import * as v from "valibot";
+import { ApiErrorBodySchema } from "./schemas";
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -12,7 +15,18 @@ export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.
   "",
 );
 
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function readApiError(response: Response, fallback: string): Promise<ApiError> {
+  const body: unknown = await response.json().catch(() => undefined);
+  const result = v.safeParse(ApiErrorBodySchema, body);
+
+  return new ApiError(response.status, result.success ? result.output.detail : fallback);
+}
+
+export async function apiRequest<TSchema extends v.GenericSchema>(
+  path: string,
+  schema: TSchema,
+  options: RequestInit = {},
+): Promise<v.InferOutput<TSchema>> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
     headers: {
@@ -22,15 +36,17 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   });
 
   if (!response.ok) {
-    const body = await response.json().catch(() => null);
-
-    throw new ApiError(
-      response.status,
-      typeof body?.detail === "string"
-        ? body.detail
-        : `Request failed (${response.status}). Please try again.`,
-    );
+    throw await readApiError(response, `Request failed (${response.status}). Please try again.`);
   }
 
-  return response.status === 204 ? (undefined as T) : response.json();
+  const body: unknown =
+    response.status === 204 ? undefined : await response.json().catch(() => undefined);
+
+  options.signal?.throwIfAborted();
+
+  const result = v.safeParse(schema, body);
+
+  if (!result.success) throw new Error("The API returned an invalid response. Please try again.");
+
+  return result.output;
 }

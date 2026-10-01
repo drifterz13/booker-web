@@ -131,3 +131,43 @@ it("tolerates incomplete text and resolves a reference when metadata arrives lat
   );
   expect(screen.getByRole("button")).toHaveAttribute("title", "Pages 42, 43 · Chapter 3 · Memory");
 });
+
+it("keeps valid sources when another source in the same snapshot is malformed", () => {
+  const message = JSON.parse(
+    JSON.stringify(answer("first", "Read [good](#cite-s1), [bad](#cite-bad).", [source])),
+  );
+
+  message.parts[1].data.sources.push({ ...source, id: "bad", pdf_pages: [1.5] });
+  render(<MessageList messages={[message]} busy={false} onCitation={vi.fn()} />);
+
+  expect(screen.getAllByRole("button")).toHaveLength(1);
+  expect(screen.getByRole("button")).toHaveTextContent("pp. 42–43");
+  expect(screen.queryByRole("link", { name: "bad" })).not.toBeInTheDocument();
+  expect(screen.getByRole("log")).toHaveTextContent("bad");
+});
+
+it("clears the previous snapshot when the latest citation envelope is malformed", () => {
+  const message = JSON.parse(JSON.stringify(answer("first", "Read [1](#cite-s1).", [source])));
+
+  message.parts.push({ type: "data-citations", id: "latest", data: { sources: "invalid" } });
+  render(<MessageList messages={[message]} busy={false} onCitation={vi.fn()} />);
+
+  expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  expect(screen.getByRole("log")).toHaveTextContent("Read 1.");
+});
+
+it("keeps the answer readable when search tool input or output is malformed", () => {
+  const message = JSON.parse(JSON.stringify(answer("first", "The answer is still readable.", [])));
+
+  message.parts.unshift({
+    type: "tool-search_book",
+    toolCallId: "search-1",
+    state: "output-available",
+    input: { query: { invalid: true } },
+    output: { passages: "invalid" },
+  });
+  render(<MessageList messages={[message]} busy={false} onCitation={vi.fn()} />);
+
+  expect(screen.getByText("Book search failed")).toBeVisible();
+  expect(screen.getByRole("log")).toHaveTextContent("The answer is still readable.");
+});
