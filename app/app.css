@@ -94,6 +94,62 @@
 }
 
 @layer components {
+  .book-motion svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .book-motion-left,
+  .book-motion-right {
+    transform-origin: 16px 16px;
+    animation: book-open 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .book-motion-ink {
+    stroke-dasharray: 10;
+    animation: book-ink 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .book-motion[data-loading="true"] .book-motion-left {
+    animation: book-page 1600ms ease-in-out infinite;
+  }
+
+  .book-motion[data-loading="true"] .book-motion-right {
+    animation: book-page 1600ms 800ms ease-in-out infinite;
+  }
+
+  .book-motion[data-loading="true"] .book-motion-ink {
+    animation: none;
+  }
+
+  .book-motion[data-paused="true"] * {
+    animation-play-state: paused;
+  }
+
+  .chat-suggestion {
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease;
+  }
+
+  .chat-suggestion:hover,
+  .chat-suggestion:focus-visible {
+    border-color: var(--primary);
+  }
+
+  .chat-suggestion-arrow {
+    transform: translate(-2px, 2px);
+    transition:
+      transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 150ms ease;
+  }
+
+  .chat-suggestion:hover .chat-suggestion-arrow,
+  .chat-suggestion:focus-visible .chat-suggestion-arrow {
+    transform: translate(0, 0);
+  }
+
   .citation-link {
     transition:
       background-color 150ms ease,
@@ -154,5 +210,51 @@
   .chat-markdown td,
   .chat-markdown th {
     @apply border px-2;
+  }
+}
+
+@keyframes book-open {
+  from {
+    transform: scaleX(0.35);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes book-ink {
+  from {
+    stroke-dashoffset: 10;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes book-page {
+  0%,
+  65%,
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  32% {
+    transform: scaleX(0.15);
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-motion-left,
+  .book-motion-right,
+  .book-motion-ink,
+  .book-motion[data-loading="true"] .book-motion-left,
+  .book-motion[data-loading="true"] .book-motion-right {
+    animation: none;
+  }
+
+  .chat-suggestion-arrow {
+    transform: none;
+    transition: opacity 150ms ease;
   }
 }

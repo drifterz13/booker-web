@@ -1,7 +1,10 @@
 export function PdfPageLoading() {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-background text-sm text-muted-foreground">
-      <output>Loading page…</output>
+      <output className="flex flex-col items-center gap-3">
+        <BookMotion loading className="size-8" />
+        Loading page…
+      </output>
     </div>
   );
 }
@@ -24,3 +27,4 @@ export function PdfReaderLoading() {
     </>
   );
 }
+import { BookMotion } from "~/shared/components/book-motion";

@@ -3,6 +3,7 @@ import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useBooks } from "~/features/books/books-context";
 import { BookSelector } from "~/features/books/components/book-selector";
 import { Button } from "~/shared/components/ui/button";
+import { BookMotion } from "~/shared/components/book-motion";
 import { useBookChat } from "../chat-context";
 import { ChatComposer } from "./chat-composer";
 import { ChatWelcome } from "./chat-welcome";
@@ -33,7 +34,8 @@ export function ChatSession({
   const statusContent = (
     <>
       {busy && (
-        <output className="block text-sm text-muted-foreground">
+        <output className="flex items-center gap-2 text-sm text-muted-foreground">
+          <BookMotion loading />
           {progress ?? (status === "submitted" ? "Thinking…" : "Answering…")}
         </output>
       )}

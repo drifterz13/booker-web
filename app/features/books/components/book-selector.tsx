@@ -1,5 +1,6 @@
 import { Button } from "~/shared/components/ui/button";
 import { BookOpen } from "lucide-react";
+import { BookMotion } from "~/shared/components/book-motion";
 import type { BookSummary } from "../api/types";
 import {
   Select,
@@ -38,7 +39,7 @@ export function BookSelector({ onChange }: { onChange: () => void }) {
           aria-label="Book to chat with"
           className="min-w-0 max-w-[min(65vw,360px)] rounded-lg border-none bg-surface-subtle shadow-none"
         >
-          <BookOpen className="size-4 text-primary" />
+          {loading ? <BookMotion loading /> : <BookOpen className="size-4 text-primary" />}
           <SelectValue
             placeholder={
               loading

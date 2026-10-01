@@ -15,7 +15,7 @@
 	# Keep the entry page fresh and support direct visits to client routes.
 	handle {
 		header Cache-Control "no-cache"
-		try_files {path} /index.html
+		try_files {path} {path}/index.html /__spa-fallback.html
 		file_server
 	}
 }

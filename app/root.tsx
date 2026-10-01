@@ -10,6 +10,7 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 import { QueryProvider } from "./shared/providers/query-provider";
+import { BookMotion } from "./shared/components/book-motion";
 
 export const meta: Route.MetaFunction = () => [
   { title: "Booker" },
@@ -62,7 +63,10 @@ export default function App() {
 export function HydrateFallback() {
   return (
     <main className="flex min-h-dvh items-center justify-center text-sm text-muted-foreground">
-      <output>Loading Booker…</output>
+      <output className="flex flex-col items-center gap-4">
+        <BookMotion loading className="size-12" />
+        Loading Booker…
+      </output>
     </main>
   );
 }
