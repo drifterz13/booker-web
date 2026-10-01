@@ -1,6 +1,7 @@
 import { useRef } from "react";
-import { LoaderCircle, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Button } from "~/shared/components/ui/button";
+import { BookMotion } from "~/shared/components/book-motion";
 import { useBookUpload } from "../upload-context";
 
 export function BookUpload() {
@@ -35,7 +36,7 @@ export function BookUpload() {
           className="rounded-lg"
         >
           {upload.busy ? (
-            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+            <BookMotion loading className="text-current" />
           ) : (
             <Upload className="size-4" aria-hidden="true" />
           )}

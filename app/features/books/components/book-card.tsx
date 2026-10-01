@@ -11,13 +11,16 @@ function bookStatus(book: BookSummary) {
   return book.active_index_id ? "Ready to chat" : "Processing";
 }
 
-export function BookCard({ book }: { book: BookSummary }) {
+export function BookCard({ book, arrivalIndex = 0 }: { book: BookSummary; arrivalIndex?: number }) {
   const [failedThumbnail, setFailedThumbnail] = useState<string>();
   const ready = book.status === "uploaded" && Boolean(book.active_index_id);
   const processing = book.status === "uploaded" && !book.active_index_id;
 
   return (
-    <article className="flex flex-col rounded-xl border bg-background p-5 transition-shadow hover:shadow-sm">
+    <article
+      className="book-card flex flex-col rounded-xl border bg-background p-5 transition-shadow hover:shadow-sm"
+      style={{ animationDelay: `${Math.min(arrivalIndex, 5) * 30}ms` }}
+    >
       <div className="mb-block-gap flex items-start justify-between gap-4">
         <div className="flex h-32 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary text-primary">
           {book.thumbnail_url && failedThumbnail !== book.thumbnail_url ? (
@@ -25,7 +28,7 @@ export function BookCard({ book }: { book: BookSummary }) {
               src={book.thumbnail_url}
               alt={`Cover of ${book.filename}`}
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="book-cover h-full w-full object-cover"
               onError={() => setFailedThumbnail(book.thumbnail_url ?? undefined)}
             />
           ) : (
@@ -33,8 +36,9 @@ export function BookCard({ book }: { book: BookSummary }) {
           )}
         </div>
         <span
+          key={bookStatus(book)}
           className={cn(
-            "rounded-md px-2 py-1 text-xs",
+            "book-status rounded-md px-2 py-1 text-xs",
             book.status === "failed" && "bg-danger/10 text-danger",
             book.status === "uploading" && "bg-surface-subtle text-muted-foreground",
             ready && "bg-success-subtle font-medium text-success",
