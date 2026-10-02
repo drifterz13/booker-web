@@ -41,7 +41,7 @@ export function AppShell() {
             <SheetContent
               side="left"
               showCloseButton={false}
-              className="w-64 gap-0 p-0 sm:max-w-64"
+              className="w-72 gap-0 p-0 sm:max-w-72"
             >
               <SheetTitle className="sr-only">Booker navigation</SheetTitle>
               <SheetDescription className="sr-only">

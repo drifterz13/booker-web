@@ -1,9 +1,37 @@
-import { BookOpen, Library, PanelLeftClose, SquarePen } from "lucide-react";
+import { Library, MessageCircle, PanelLeftClose, SquarePen } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import { useBooks } from "~/features/books/books-context";
 import bookerIcon from "../assets/booker-icon.svg";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
+
+const sampleConversations = [
+  {
+    period: "Today",
+    items: [
+      { title: "The case for doing less", book: "Rework" },
+      { title: "How to make ideas stick", book: "Made to Stick" },
+      { title: "When should we change course?", book: "Rework" },
+    ],
+  },
+  {
+    period: "Yesterday",
+    items: [
+      { title: "What makes a useful habit?", book: "Atomic Habits" },
+      { title: "Finding the main argument", book: "The Art of War" },
+      { title: "A practical reading plan", book: "Deep Work" },
+    ],
+  },
+  {
+    period: "Earlier",
+    items: [
+      { title: "Strategy and uncertainty", book: "The Art of War" },
+      { title: "A simpler way to model domains", book: "Learning DDD" },
+      { title: "How teams make decisions", book: "Rework" },
+      { title: "The most useful examples", book: "Learning DDD" },
+    ],
+  },
+];
 
 export function AppSidebar({
   onNewChat,
@@ -27,7 +55,7 @@ export function AppSidebar({
     <aside
       id={id}
       aria-label="Main sidebar"
-      className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r bg-surface-subtle p-4 md:w-56 lg:w-60"
+      className="flex h-full w-72 shrink-0 flex-col border-r bg-surface-subtle p-4"
     >
       <div className="flex items-center justify-between px-2 pt-2">
         <Link
@@ -68,38 +96,41 @@ export function AppSidebar({
           </span>
         </NavLink>
       </nav>
-      <div className="mt-section-gap border-t px-3 pt-5">
-        <p className="text-overline font-medium uppercase tracking-overline text-muted-foreground">
-          Your library
-        </p>
-        {books.length === 0 ? (
-          <p className="mt-3 text-xs leading-5 text-muted-foreground">
-            A good book is a great beginning.
-            <br />
-            Add your first one to get started.
-          </p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {books.slice(0, 5).map((book) => (
-              <li key={book.id}>
-                <Link
-                  to="/books"
-                  onClick={onNavigate}
-                  className="flex items-center gap-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <BookOpen className="size-3.5 shrink-0" />
-                  <span className="truncate">{book.filename}</span>
-                </Link>
-              </li>
+      <div className="mt-6 min-h-0 flex-1 overflow-y-auto border-t pt-4">
+        <section aria-label="Sample conversations">
+          <div className="flex items-center justify-between px-3">
+            <h2 className="text-sm font-medium text-foreground">Conversations</h2>
+            <span className="rounded-md bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
+              Preview
+            </span>
+          </div>
+          <div className="mt-4 space-y-4">
+            {sampleConversations.map((group) => (
+              <div key={group.period}>
+                <h3 className="px-3 text-xs font-medium text-muted-foreground">{group.period}</h3>
+                <ul className="mt-1">
+                  {group.items.map((conversation) => (
+                    <li key={conversation.title} className="flex gap-3 rounded-lg px-3 py-1">
+                      <MessageCircle
+                        aria-hidden="true"
+                        className="mt-0.5 size-4 shrink-0"
+                        strokeWidth={1.7}
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm leading-5 text-foreground">
+                          {conversation.title}
+                        </p>
+                        <p className="truncate text-xs leading-4 text-muted-foreground">
+                          {conversation.book}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
-        )}
-      </div>
-      <div className="mt-auto px-3 pt-12 pb-2">
-        <p className="text-xs font-medium">Read. Ask. Discover.</p>
-        <p className="mt-1.5 text-caption text-muted-foreground">
-          A quieter space to explore your books.
-        </p>
+          </div>
+        </section>
       </div>
     </aside>
   );
