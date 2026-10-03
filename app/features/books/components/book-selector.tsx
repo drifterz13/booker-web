@@ -22,7 +22,7 @@ function unavailableLabel(book: BookSummary) {
 }
 
 export function BookSelector({ onChange }: { onChange: () => void }) {
-  const { books, selectedBook, selectBook, loading, error, hasMore, loadingMore, loadMore, retry } =
+  const { books, selectedBook, selectBook, loading, error, hasMore, loadingMore, loadMore } =
     useBooks();
 
   return (
@@ -70,10 +70,7 @@ export function BookSelector({ onChange }: { onChange: () => void }) {
       </Select>
       {error && (
         <div role="alert" className="mt-2 text-xs text-danger">
-          Could not load books.{" "}
-          <Button variant="ghost" size="sm" onClick={retry}>
-            Retry
-          </Button>
+          Could not load books.
         </div>
       )}
     </div>

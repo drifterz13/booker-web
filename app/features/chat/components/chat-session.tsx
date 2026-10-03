@@ -24,7 +24,7 @@ export function ChatSession({
 }) {
   const [draft, setDraft] = useState("");
   const { books, selectedBook } = useBooks();
-  const { messages, sendMessage, status, error, stop, regenerate, progress } = useBookChat();
+  const { messages, sendMessage, status, error, stop, progress } = useBookChat();
   const busy = status === "submitted" || status === "streaming";
   const processingBooks = books.some(
     (book) => book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
@@ -42,15 +42,6 @@ export function ChatSession({
       {error && (
         <div role="alert" className="flex items-center justify-between gap-3 text-sm text-danger">
           <p>{error.message}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void regenerate();
-            }}
-          >
-            Retry
-          </Button>
         </div>
       )}
     </>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { createBook } from "./api/books";
 import { abortUpload, completeUpload, startUpload } from "./api/uploads";
 import { uploadParts } from "./lib/multipart-upload";
@@ -21,14 +22,11 @@ interface UploadState {
   phase: Phase;
   filename?: string;
   progress: number;
-  error?: string;
-  canRetryCreate?: boolean;
 }
 
 interface UploadContextValue extends UploadState {
   busy: boolean;
   start: (file: File) => void;
-  retryCreate: () => void;
 }
 
 const UploadContext = createContext<UploadContextValue | null>(null);
@@ -37,7 +35,6 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [state, setState] = useState<UploadState>({ phase: "idle", progress: 0 });
   const running = useRef(false);
-  const completed = useRef<{ filename: string; objectKey: string } | null>(null);
   const mutation = useMutation({
     mutationFn: ({ filename, objectKey }: { filename: string; objectKey: string }) =>
       createBook(filename, objectKey),
@@ -47,24 +44,17 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  async function registerBook() {
-    const uploaded = completed.current;
-
-    if (!uploaded) return;
-
+  async function registerBook(uploaded: { filename: string; objectKey: string }) {
     setState({ phase: "creating", filename: uploaded.filename, progress: 100 });
 
     try {
       await mutation.mutateAsync(uploaded);
-      completed.current = null;
       setState({ phase: "success", filename: uploaded.filename, progress: 100 });
+      toast.success("Book uploaded", { description: `${uploaded.filename} is now processing.` });
     } catch (error) {
-      setState({
-        phase: "error",
-        filename: uploaded.filename,
-        progress: 100,
-        canRetryCreate: true,
-        error: `${error instanceof Error ? error.message : "Could not create the book."} The PDF is uploaded. Check the library before retrying; the request may have succeeded.`,
+      setState({ phase: "error", filename: uploaded.filename, progress: 100 });
+      toast.error("Could not add the book", {
+        description: `${error instanceof Error ? error.message : "Could not create the book."} The PDF is uploaded. Check the library before trying again; the request may have succeeded.`,
       });
       void queryClient.invalidateQueries({ queryKey: bookKeys.lists });
     }
@@ -98,8 +88,7 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
       const result = await completeUpload(upload, parts);
 
       finished = true;
-      completed.current = { filename: file.name, objectKey: result.object_key };
-      await registerBook();
+      await registerBook({ filename: file.name, objectKey: result.object_key });
     } catch (error) {
       let cleanupError = "";
 
@@ -111,17 +100,22 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      const message =
+        (control.signal.aborted
+          ? "Upload cancelled."
+          : error instanceof Error
+            ? error.message
+            : "Could not upload the PDF.") + cleanupError;
+
       setState({
         phase: control.signal.aborted && !cleanupError ? "cancelled" : "error",
         filename: file.name,
         progress: 0,
-        error:
-          (control.signal.aborted
-            ? "Upload cancelled."
-            : error instanceof Error
-              ? error.message
-              : "Could not upload the PDF.") + cleanupError,
       });
+
+      if (!control.signal.aborted || cleanupError) {
+        toast.error("Could not upload the PDF", { description: message });
+      }
     } finally {
       running.current = false;
     }
@@ -133,23 +127,14 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
     const error = validateBook(file);
 
     if (error) {
-      setState({ phase: "error", progress: 0, error });
+      setState({ phase: "error", progress: 0 });
+      toast.error(error);
 
       return;
     }
 
-    completed.current = null;
     running.current = true;
     void run(file);
-  }
-
-  function retryCreate() {
-    if (running.current || !completed.current) return;
-
-    running.current = true;
-    void registerBook().finally(() => {
-      running.current = false;
-    });
   }
 
   const busy = ["preparing", "uploading", "finalizing", "creating"].includes(state.phase);
@@ -160,7 +145,6 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
         ...state,
         busy,
         start,
-        retryCreate,
       }}
     >
       {children}

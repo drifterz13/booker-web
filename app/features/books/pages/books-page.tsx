@@ -56,14 +56,6 @@ export function BooksPage() {
       {books.isError && (
         <div role="alert" className="books-page-state mt-section-gap text-sm text-danger">
           <p>{books.error.message}</p>
-          <Button
-            variant="outline"
-            className="mt-3"
-            disabled={books.isFetching}
-            onClick={() => void books.refetch()}
-          >
-            Retry loading books
-          </Button>
         </div>
       )}
       {books.data && books.data.length === 0 && (

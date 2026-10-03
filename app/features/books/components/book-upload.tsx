@@ -42,17 +42,7 @@ export function BookUpload() {
           )}
           {buttonLabel}
         </Button>
-        {upload.canRetryCreate && (
-          <Button variant="outline" onClick={upload.retryCreate}>
-            Retry creating book
-          </Button>
-        )}
       </div>
-      {upload.error && upload.phase === "error" && (
-        <p role="alert" className="mt-2 text-sm text-danger">
-          {upload.error}
-        </p>
-      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Books from "~/routes/books";
 import { BookUploadProvider } from "~/features/books/upload-context";
+import { Toaster } from "~/shared/components/ui/sonner";
 
 export function renderBooksPage() {
   const client = new QueryClient({
@@ -18,6 +19,7 @@ export function renderBooksPage() {
       <BookUploadProvider>
         <Books />
       </BookUploadProvider>
+      <Toaster />
     </QueryClientProvider>,
   );
 

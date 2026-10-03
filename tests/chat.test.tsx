@@ -92,14 +92,10 @@ it("lets the reader send a question, view matching passages, and ask a follow-up
   expect(screen.getByText("slowly", { selector: "strong" })).toBeVisible();
 });
 
-it("keeps a failed question and retries without duplicating it", async () => {
-  let calls = 0;
-
+it("keeps a failed question with an inline error and no retry button", async () => {
   server.use(
     http.post(`${apiUrl}/books/:id/chat`, () =>
-      ++calls === 1
-        ? HttpResponse.json({ detail: "Chat is not configured" }, { status: 503 })
-        : chatAnswer(),
+      HttpResponse.json({ detail: "Chat is not configured" }, { status: 503 }),
     ),
   );
   const { user } = renderChatPage();
@@ -107,10 +103,8 @@ it("keeps a failed question and retries without duplicating it", async () => {
   await selectBook(user);
   await typeQuestion(user, "Help me read{Enter}");
   expect(await screen.findByRole("alert")).toHaveTextContent("Chat is not configured");
-  await user.click(screen.getByRole("button", { name: "Retry" }));
-  expect(await screen.findByText("slowly", { selector: "strong" })).toBeVisible();
   expect(screen.getAllByText("Help me read")).toHaveLength(1);
-  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
 });
 
 it("falls back to a readable chat error when the error body does not match its schema", async () => {

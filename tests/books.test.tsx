@@ -110,6 +110,18 @@ describe("My books", () => {
     expect(await screen.findByRole("heading", { name: uploadedBook.filename })).toBeVisible();
     expect(screen.queryByText("Loading your books…")).not.toBeInTheDocument();
   });
+
+  it("keeps a library fetch error inline without a retry button", async () => {
+    server.use(
+      http.get(`${apiUrl}/books`, () =>
+        HttpResponse.json({ detail: "Library unavailable" }, { status: 503 }),
+      ),
+    );
+    renderBooksPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Library unavailable");
+    expect(screen.queryByRole("button", { name: /Retry/ })).not.toBeInTheDocument();
+  });
 });
 
 describe("Add a book", () => {
@@ -138,7 +150,7 @@ describe("Add a book", () => {
     expect(await screen.findByRole("button", { name: /^Uploading… \d+%$/ })).toBeDisabled();
     expect(screen.queryByRole("status", { name: /Uploading/ })).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole("button", { name: "Add a book" })).toBeEnabled());
-    expect(screen.queryByText("Book added. Processing has started.")).not.toBeInTheDocument();
+    expect(await screen.findByText("In progress.pdf is now processing.")).toBeVisible();
   });
 
   it.each([
@@ -147,6 +159,7 @@ describe("Add a book", () => {
   ])("uploads %s and lists the newly created book", async (_description, size) => {
     library.length = 0;
     const { user } = renderBooksPage();
+    const filename = `${_description}.pdf`;
 
     await screen.findByRole("heading", {
       name: "Your next read starts here",
@@ -167,20 +180,20 @@ describe("Add a book", () => {
 
     await user.upload(
       fileInput,
-      new File([new Uint8Array(size)], "My new book.pdf", {
+      new File([new Uint8Array(size)], filename, {
         type: "application/pdf",
       }),
     );
 
     const title = await screen.findByRole("heading", {
-      name: "My new book.pdf",
+      name: filename,
     });
     const card = within(title.closest("article")!);
 
     expect(card.getByText("Uploading")).toBeVisible();
     expect(card.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add a book" })).toBeEnabled();
-    expect(screen.queryByText("Book added. Processing has started.")).not.toBeInTheDocument();
+    expect(await screen.findByText(`${filename} is now processing.`)).toBeVisible();
   });
 
   it.each([
@@ -209,8 +222,30 @@ describe("Add a book", () => {
 
     await user.upload(screen.getByLabelText("Choose a PDF book"), file());
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(await screen.findByText(message)).toBeVisible();
+    expect(screen.getByLabelText("Choose a PDF book").parentElement).not.toHaveTextContent(message);
     expect(screen.getByRole("button", { name: "Add a book" })).toBeEnabled();
-    expect(screen.queryByText("Book added. Processing has started.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Retry/ })).not.toBeInTheDocument();
+  });
+
+  it("shows an upload failure in a toast without inline error or retry", async () => {
+    server.use(
+      http.post(`${apiUrl}/uploads`, () =>
+        HttpResponse.json({ detail: "Upload storage unavailable" }, { status: 503 }),
+      ),
+    );
+    const { user } = renderBooksPage();
+
+    await screen.findByRole("heading", { name: uploadedBook.filename });
+    await user.upload(
+      screen.getByLabelText("Choose a PDF book"),
+      new File(["PDF"], "Failed upload.pdf", { type: "application/pdf" }),
+    );
+
+    expect(await screen.findByText("Upload storage unavailable")).toBeVisible();
+    expect(screen.getByLabelText("Choose a PDF book").parentElement).not.toHaveTextContent(
+      "Upload storage unavailable",
+    );
+    expect(screen.queryByRole("button", { name: /Retry/ })).not.toBeInTheDocument();
   });
 });

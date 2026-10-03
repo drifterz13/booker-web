@@ -18,12 +18,10 @@ const PDF_OPTIONS = { disableRange: true };
 export default function PdfReader({
   url,
   name,
-  onRetry,
   initialPage = 1,
 }: {
   url: string;
   name: string;
-  onRetry?: () => void;
   initialPage?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -130,11 +128,6 @@ export default function PdfReader({
         {error ? (
           <div role="alert" className="text-sm text-danger">
             <p>{error}</p>
-            {onRetry && (
-              <Button variant="outline" className="mt-3" onClick={onRetry}>
-                Retry PDF preview
-              </Button>
-            )}
           </div>
         ) : (
           <Document

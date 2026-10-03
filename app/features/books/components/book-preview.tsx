@@ -52,9 +52,6 @@ export function BookPreview({
       ) : pdf.isError ? (
         <div role="alert" className="p-4 text-sm text-danger">
           <p>{pdf.error.message}</p>
-          <Button variant="outline" className="mt-3" onClick={() => void pdf.refetch()}>
-            Retry PDF preview
-          </Button>
         </div>
       ) : (
         <Suspense fallback={<PdfReaderLoading />}>
@@ -62,7 +59,6 @@ export function BookPreview({
             key={`${pdf.data.url}:${citation?.requestId ?? "preview"}`}
             url={pdf.data.url}
             name={book.filename}
-            onRetry={() => void pdf.refetch()}
             initialPage={citation?.pages[0]}
           />
         </Suspense>

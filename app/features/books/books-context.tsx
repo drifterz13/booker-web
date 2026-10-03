@@ -13,7 +13,6 @@ interface BooksContextValue {
   hasMore: boolean;
   loadingMore: boolean;
   loadMore: () => void;
-  retry: () => void;
 }
 
 const BooksContext = createContext<BooksContextValue | null>(null);
@@ -51,9 +50,6 @@ export function BooksProvider({ children }: { children: ReactNode }) {
         loadingMore: library.isFetchingNextPage,
         loadMore: () => {
           void library.fetchNextPage();
-        },
-        retry: () => {
-          void library.refetch();
         },
       }}
     >

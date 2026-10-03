@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { QueryProvider } from "./shared/providers/query-provider";
 import { BookMotion } from "./shared/components/book-motion";
+import { Toaster } from "./shared/components/ui/sonner";
 
 export const meta: Route.MetaFunction = () => [
   { title: "Booker" },
@@ -56,6 +57,7 @@ export default function App() {
   return (
     <QueryProvider>
       <Outlet />
+      <Toaster />
     </QueryProvider>
   );
 }
