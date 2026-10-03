@@ -7,7 +7,7 @@ import { bookKeys, BOOK_PAGE_SIZE } from "./queries";
 interface BooksContextValue {
   books: BookSummary[];
   selectedBook: BookSummary | undefined;
-  selectBook: (id: string) => void;
+  selectBook: (id: string | undefined) => void;
   loading: boolean;
   error: Error | null;
   hasMore: boolean;
@@ -36,7 +36,6 @@ export function BooksProvider({ children }: { children: ReactNode }) {
         : false,
   });
   const books = library.data?.pages.flat() ?? [];
-  const readyBooks = books.filter((book) => book.status === "uploaded" && book.active_index_id);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = library;
 
   useEffect(() => {
@@ -47,7 +46,7 @@ export function BooksProvider({ children }: { children: ReactNode }) {
     <BooksContext.Provider
       value={{
         books,
-        selectedBook: books.find((book) => book.id === selectedId) ?? readyBooks[0],
+        selectedBook: books.find((book) => book.id === selectedId),
         selectBook: setSelectedId,
         loading: library.isPending,
         error: library.error,

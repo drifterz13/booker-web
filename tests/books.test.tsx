@@ -28,6 +28,19 @@ describe("My books", () => {
     expect(card.getByText(/PDF · Added/)).toBeVisible();
   });
 
+  it("starts a fresh chat with the book chosen from the library", async () => {
+    const { user } = renderBooksPage();
+    const title = await screen.findByRole("heading", { name: uploadedBook.filename });
+    const card = within(title.closest("article")!);
+
+    await user.click(card.getByRole("link", { name: `Start chat with ${uploadedBook.filename}` }));
+
+    expect(await screen.findByRole("textbox", { name: "Your question" })).toBeVisible();
+    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
+      uploadedBook.filename,
+    );
+  });
+
   it("lists a successfully uploaded book without a thumbnail", async () => {
     renderBooksPage();
 
@@ -77,10 +90,10 @@ describe("My books", () => {
 
     expect(await screen.findByText("Processing")).toBeVisible();
     expect(await screen.findByText("Ready to chat", {}, { timeout: 4_000 })).toBeVisible();
-    expect(requests).toBe(2);
+    expect(requests).toBe(3);
 
     await new Promise((resolve) => setTimeout(resolve, 3_200));
-    expect(requests).toBe(2);
+    expect(requests).toBe(3);
   }, 8_000);
 
   it("guides the reader to add a PDF when their library is empty", async () => {

@@ -4,6 +4,7 @@ import { BookSelector } from "~/features/books/components/book-selector";
 import { Button } from "~/shared/components/ui/button";
 import { BookMotion } from "~/shared/components/book-motion";
 import { useBookChat } from "../chat-context";
+import { BookStart } from "./book-start";
 import { ChatComposer } from "./chat-composer";
 import { ChatWelcome } from "./chat-welcome";
 import { MessageList } from "./message-list";
@@ -21,13 +22,19 @@ export function ChatSession({
   previewOpen: boolean;
   onCitation: (source: CitationSource) => void;
 }) {
-  const { books, selectedBook } = useBooks();
-  const { messages, sendMessage, status, error, stop, progress, draft, setDraft, newChat } =
-    useBookChat();
+  const { selectedBook } = useBooks();
+  const {
+    messages,
+    sendMessage,
+    status,
+    error,
+    stop,
+    progress,
+    draft,
+    setDraft,
+    startChatWithBook,
+  } = useBookChat();
   const busy = status === "submitted" || status === "streaming";
-  const processingBooks = books.some(
-    (book) => book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
-  );
   const hasMessages = messages.length > 0;
   const hasStatus = busy || error;
   const statusContent = (
@@ -46,38 +53,43 @@ export function ChatSession({
     </>
   );
 
+  if (!selectedBook) {
+    return (
+      <BookStart
+        onSelect={(id) => {
+          startChatWithBook(id);
+          onBookSelected();
+        }}
+      />
+    );
+  }
+
   return (
     <div
       className={`flex h-full min-h-0 flex-col ${hasMessages ? "overflow-hidden" : "overflow-y-auto"}`}
     >
       <header className="flex shrink-0 items-center justify-between gap-3 px-page-gutter py-3 sm:px-page-gutter-wide">
         <BookSelector
-          onChange={() => {
-            newChat();
+          onChange={(id) => {
+            startChatWithBook(id);
             onBookSelected();
           }}
         />
-        {selectedBook ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label={previewOpen ? "Hide PDF preview" : "Show PDF preview"}
-            onClick={onTogglePreview}
-          >
-            {previewOpen ? (
-              <PanelRightClose className="size-4" />
-            ) : (
-              <PanelRightOpen className="size-4" />
-            )}
-            <span className="hidden @min-[440px]:inline">
-              {previewOpen ? "Hide PDF" : "View PDF"}
-            </span>
-          </Button>
-        ) : (
-          <span className="rounded-full border px-2.5 py-1 text-overline font-medium tracking-overline text-muted-foreground">
-            PREVIEW
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={previewOpen ? "Hide PDF preview" : "Show PDF preview"}
+          onClick={onTogglePreview}
+        >
+          {previewOpen ? (
+            <PanelRightClose className="size-4" />
+          ) : (
+            <PanelRightOpen className="size-4" />
+          )}
+          <span className="hidden @min-[440px]:inline">
+            {previewOpen ? "Hide PDF" : "View PDF"}
           </span>
-        )}
+        </Button>
       </header>
       <section
         aria-label="Book chat"
@@ -98,14 +110,13 @@ export function ChatSession({
         <ChatComposer
           value={draft}
           onChange={setDraft}
-          bookName={selectedBook?.filename}
-          waitingForBook={!selectedBook && processingBooks}
+          bookName={selectedBook.filename}
           busy={busy}
           onStop={() => {
             stop();
           }}
           onSend={() => {
-            if (selectedBook?.active_index_id && !busy && draft.trim()) {
+            if (selectedBook.active_index_id && !busy && draft.trim()) {
               sendMessage({ text: draft.trim() });
               setDraft("");
             }

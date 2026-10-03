@@ -52,6 +52,10 @@ function renderWorkspace() {
 }
 
 async function ask(user: ReturnType<typeof userEvent.setup>, question: string) {
+  if (screen.queryByRole("heading", { name: "Start a chat" })) {
+    await user.click(await screen.findByRole("button", { name: /The art of reading\.pdf/i }));
+  }
+
   const input = screen.getByRole("textbox", { name: "Your question" });
 
   input.focus();
@@ -85,6 +89,21 @@ it("creates a saved conversation with the latest user message and refreshes the 
     messages: [{ role: "user", parts: [{ type: "text", text: "How should I read?" }] }],
   });
   expect((requestBody as { messages: unknown[] }).messages).toHaveLength(1);
+});
+
+it("returns to book choice after Start chat", async () => {
+  server.use(
+    http.get(`${apiUrl}/conversations`, () => HttpResponse.json([])),
+    http.post(`${apiUrl}/books/:id/conversations`, () => chatAnswer()),
+  );
+  const user = renderWorkspace();
+
+  await ask(user, "How should I read?");
+  expect(await screen.findByText("slowly", { selector: "strong" })).toBeVisible();
+  await user.click(screen.getByRole("link", { name: "Start chat" }));
+
+  expect(screen.getByRole("heading", { name: "Start a chat" })).toBeVisible();
+  expect(screen.queryByRole("textbox", { name: "Your question" })).not.toBeInTheDocument();
 });
 
 it("restores ordered messages and citations, then posts follow-ups to that conversation", async () => {

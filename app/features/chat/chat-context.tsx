@@ -23,6 +23,7 @@ type ChatContextValue = Pick<
 > & {
   session: number;
   newChat: () => void;
+  startChatWithBook: (id: string) => void;
   openConversation: (bookId: string, id: string) => Promise<boolean>;
   activeConversationId: string | null;
   openingConversationId: string | null;
@@ -69,7 +70,7 @@ function BookChatProvider({
   draft: string;
   setDraft: Dispatch<SetStateAction<string>>;
   restoredConversation: ConversationDetail | null;
-  selectBook: (id: string) => void;
+  selectBook: (id: string | undefined) => void;
   restoreAcrossBooks: (conversation: ConversationDetail | null) => void;
 }) {
   const queryClient = useQueryClient();
@@ -144,6 +145,12 @@ function BookChatProvider({
     setDraft("");
     setProgress(undefined);
     setSession((current) => current + 1);
+    selectBook(undefined);
+  }
+
+  function startChatWithBook(id: string) {
+    newChat();
+    selectBook(id);
   }
 
   async function openConversation(conversationBookId: string, id: string) {
@@ -196,6 +203,7 @@ function BookChatProvider({
         ...chat,
         session,
         newChat,
+        startChatWithBook,
         openConversation,
         activeConversationId,
         openingConversationId,

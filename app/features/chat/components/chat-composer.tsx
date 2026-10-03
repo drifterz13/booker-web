@@ -7,8 +7,7 @@ interface ChatComposerProps {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
-  bookName?: string;
-  waitingForBook?: boolean;
+  bookName: string;
   busy?: boolean;
   onStop?: () => void;
 }
@@ -18,7 +17,6 @@ export function ChatComposer({
   onChange,
   onSend,
   bookName,
-  waitingForBook = false,
   busy = false,
   onStop,
 }: ChatComposerProps) {
@@ -80,15 +78,8 @@ export function ChatComposer({
           </Button>
         )}
       </form>
-      <p
-        id={hintId}
-        className={bookName ? "sr-only" : "mt-2 text-center text-caption text-muted-foreground"}
-      >
-        {bookName
-          ? "Enter to send · Shift + Enter for a new line"
-          : waitingForBook
-            ? "Processing books will be available here automatically."
-            : "Choose a PDF book to start a conversation."}
+      <p id={hintId} className="sr-only">
+        Enter to send · Shift + Enter for a new line
       </p>
     </div>
   );

@@ -2,7 +2,7 @@ import { ChatPage } from "~/features/chat/pages/chat-page";
 
 export function meta() {
   return [
-    { title: "New chat · Booker" },
+    { title: "Start chat · Booker" },
     { name: "description", content: "A thoughtful space to explore and chat with your books." },
   ];
 }

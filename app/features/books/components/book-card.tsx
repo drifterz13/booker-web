@@ -1,5 +1,8 @@
-import { BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
+import { useBookChat } from "~/features/chat/chat-context";
+import { Button } from "~/shared/components/ui/button";
 import { cn } from "~/shared/lib/utils";
 import type { BookSummary } from "../api/types";
 
@@ -13,12 +16,13 @@ function bookStatus(book: BookSummary) {
 
 export function BookCard({ book, arrivalIndex = 0 }: { book: BookSummary; arrivalIndex?: number }) {
   const [failedThumbnail, setFailedThumbnail] = useState<string>();
+  const { startChatWithBook } = useBookChat();
   const ready = book.status === "uploaded" && Boolean(book.active_index_id);
   const processing = book.status === "uploaded" && !book.active_index_id;
 
   return (
     <article
-      className="book-card flex flex-col rounded-xl border bg-background p-5 transition-shadow hover:shadow-sm"
+      className="book-card flex flex-col rounded-xl border bg-background p-5"
       style={{ animationDelay: `${Math.min(arrivalIndex, 5) * 30}ms` }}
     >
       <div className="mb-block-gap flex items-start justify-between gap-4">
@@ -52,6 +56,20 @@ export function BookCard({ book, arrivalIndex = 0 }: { book: BookSummary; arriva
       <p className="mt-2 text-xs text-muted-foreground">
         PDF · Added {new Date(book.created_at).toLocaleDateString()}
       </p>
+      {ready && (
+        <div className="mt-auto pt-5">
+          <Button asChild size="lg" className="w-full justify-between">
+            <Link
+              to="/"
+              aria-label={`Start chat with ${book.filename}`}
+              onClick={() => startChatWithBook(book.id)}
+            >
+              Start chat
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          </Button>
+        </div>
+      )}
     </article>
   );
 }

@@ -10,20 +10,19 @@ import { renderChatPage } from "./render-chat-page";
 import { makePreviewPdf } from "./mocks/pdf";
 import type { CitationSource } from "~/features/chat/types";
 
-it("selects a saved book automatically and lets the reader choose another", async () => {
+it("asks the reader to choose a book before showing the composer", async () => {
   const { user } = renderChatPage();
 
   expect(screen.queryByRole("region", { name: "PDF preview" })).not.toBeInTheDocument();
-  await waitFor(() =>
-    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
-      uploadedBook.filename,
-    ),
-  );
-  const selector = screen.getByRole("combobox", { name: "Book to chat with" });
+  expect(screen.getByRole("heading", { name: "Start a chat" })).toBeVisible();
+  expect(screen.queryByRole("textbox", { name: "Your question" })).not.toBeInTheDocument();
+  await selectBook(user);
 
   const initialPreview = within(await screen.findByRole("region", { name: "PDF preview" }));
 
   expect(initialPreview.getByRole("heading", { name: uploadedBook.filename })).toBeVisible();
+
+  const selector = screen.getByRole("combobox", { name: "Book to chat with" });
 
   selector.focus();
   await user.keyboard("{ArrowDown}");
@@ -52,16 +51,17 @@ async function selectBook(
   user: ReturnType<typeof renderChatPage>["user"],
   name = uploadedBook.filename,
 ) {
-  await waitFor(() =>
-    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toBeEnabled(),
-  );
-  const selector = screen.getByRole("combobox", { name: "Book to chat with" });
+  const selector = screen.queryByRole("combobox", { name: "Book to chat with" });
 
-  if (selector.textContent?.includes(name)) return;
+  if (selector) {
+    if (selector.textContent?.includes(name)) return;
 
-  selector.focus();
-  await user.keyboard("{ArrowDown}");
-  await user.click(await screen.findByRole("option", { name }));
+    selector.focus();
+    await user.keyboard("{ArrowDown}");
+    await user.click(await screen.findByRole("option", { name }));
+  } else {
+    await user.click(await screen.findByRole("button", { name: new RegExp(name, "i") }));
+  }
 }
 
 it("lets the reader send a question, view matching passages, and ask a follow-up", async () => {
@@ -83,7 +83,7 @@ it("lets the reader send a question, view matching passages, and ask a follow-up
   );
   const { user } = renderChatPage();
 
-  expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Send message" })).not.toBeInTheDocument();
   await selectBook(user);
   await typeQuestion(user, "How should I read?");
   expect(screen.getByRole("textbox", { name: "Your question" })).toHaveValue("How should I read?");
@@ -215,29 +215,17 @@ it("offers a processing book for chat once it becomes ready", async () => {
   library[1].active_index_id = null;
   const { user } = renderChatPage();
 
-  await waitFor(() =>
-    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
-      "No books ready yet",
-    ),
-  );
-  const selector = screen.getByRole("combobox", { name: "Book to chat with" });
-
-  await user.click(selector);
-  expect(
-    screen.getByRole("option", { name: `${library[0].filename} · Processing` }),
-  ).toHaveAttribute("data-disabled");
-  await user.keyboard("{Escape}");
-  await typeQuestion(user, "Help me read");
-  expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
-  expect(screen.getByText("Processing books will be available here automatically.")).toBeVisible();
-  expect(screen.queryByRole("button", { name: "Check book readiness" })).not.toBeInTheDocument();
+  expect(await screen.findByText(/Your books are still processing/)).toBeVisible();
+  expect(screen.queryByRole("textbox", { name: "Your question" })).not.toBeInTheDocument();
   library[0].active_index_id = "index-ready";
-  await waitFor(() => expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled(), {
-    timeout: 4_000,
-  });
-  expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
-    library[0].filename,
+  await screen.findByRole(
+    "button",
+    { name: new RegExp(library[0].filename, "i") },
+    { timeout: 4_000 },
   );
+  expect(screen.queryByRole("textbox", { name: "Your question" })).not.toBeInTheDocument();
+  await selectBook(user, library[0].filename);
+  await typeQuestion(user, "Help me read");
   await user.click(screen.getByRole("button", { name: "Send message" }));
   expect(await screen.findByText("Help me read")).toBeVisible();
   expect(await screen.findByText("slowly", { selector: "strong" })).toBeVisible();

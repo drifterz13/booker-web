@@ -70,7 +70,7 @@ export function ChatPage() {
               onBookSelected={() => {
                 setCitationTarget(undefined);
                 setClosedBookId(undefined);
-                setMobilePreviewActivated(true);
+                setMobilePreviewActivated(false);
               }}
               previewOpen={previewOpen}
             />

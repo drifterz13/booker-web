@@ -1,7 +1,6 @@
 import { Library, PanelLeftClose, SquarePen } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router";
 import { useBooks } from "~/features/books/books-context";
-import { useBookChat } from "~/features/chat/chat-context";
 import { ConversationList } from "~/features/chat/components/conversation-list";
 import bookerIcon from "../assets/booker-icon.svg";
 import { Button } from "./ui/button";
@@ -18,10 +17,9 @@ export function AppSidebar({
   onNavigate: () => void;
   id?: string;
 }) {
-  const { books, hasMore, loading } = useBooks();
-  const { activeConversationId } = useBookChat();
+  const { books, hasMore, loading, selectedBook } = useBooks();
   const { pathname } = useLocation();
-  const isNewChat = pathname === "/" && !activeConversationId;
+  const isStartChat = pathname === "/" && !selectedBook;
   const navClass = (isActive: boolean) =>
     cn(
       "flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm leading-5 transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary",
@@ -39,7 +37,10 @@ export function AppSidebar({
           to="/"
           className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           aria-label="Booker home"
-          onClick={onNavigate}
+          onClick={() => {
+            onNewChat();
+            onNavigate();
+          }}
         >
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <img src={bookerIcon} alt="" className="size-4 brightness-0 invert" />
@@ -61,15 +62,15 @@ export function AppSidebar({
       <nav aria-label="Main navigation" className="mt-6 space-y-1">
         <Link
           to="/"
-          aria-current={isNewChat ? "page" : undefined}
-          className={navClass(isNewChat)}
+          aria-current={isStartChat ? "page" : undefined}
+          className={navClass(isStartChat)}
           onClick={() => {
             onNewChat();
             onNavigate();
           }}
         >
           <SquarePen aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.7} />
-          New chat
+          Start chat
         </Link>
         <NavLink to="/books" className={({ isActive }) => navClass(isActive)} onClick={onNavigate}>
           <Library aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.7} />

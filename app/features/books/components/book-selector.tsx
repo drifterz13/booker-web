@@ -21,20 +21,12 @@ function unavailableLabel(book: BookSummary) {
   return null;
 }
 
-export function BookSelector({ onChange }: { onChange: () => void }) {
-  const { books, selectedBook, selectBook, loading, error, hasMore, loadingMore, loadMore } =
-    useBooks();
+export function BookSelector({ onChange }: { onChange: (id: string) => void }) {
+  const { books, selectedBook, loading, error, hasMore, loadingMore, loadMore } = useBooks();
 
   return (
     <div className="min-w-0">
-      <Select
-        value={selectedBook?.id ?? ""}
-        disabled={books.length === 0}
-        onValueChange={(id) => {
-          selectBook(id);
-          onChange();
-        }}
-      >
+      <Select value={selectedBook?.id ?? ""} disabled={books.length === 0} onValueChange={onChange}>
         <SelectTrigger
           aria-label="Book to chat with"
           className="min-w-0 max-w-[min(65vw,360px)] rounded-lg border-none bg-surface-subtle shadow-none"
