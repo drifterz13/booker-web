@@ -40,7 +40,7 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
       createBook(filename, objectKey),
     onSuccess: (book) => {
       queryClient.setQueryData(bookKeys.detail(book.id), book);
-      void queryClient.invalidateQueries({ queryKey: bookKeys.lists });
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists });
     },
   });
 
@@ -56,7 +56,7 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
       toast.error("Could not add the book", {
         description: `${error instanceof Error ? error.message : "Could not create the book."} The PDF is uploaded. Check the library before trying again; the request may have succeeded.`,
       });
-      void queryClient.invalidateQueries({ queryKey: bookKeys.lists });
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists });
     }
   }
 
@@ -134,7 +134,7 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
     }
 
     running.current = true;
-    void run(file);
+    run(file);
   }
 
   const busy = ["preparing", "uploading", "finalizing", "creating"].includes(state.phase);

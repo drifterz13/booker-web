@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useBooks } from "~/features/books/books-context";
 import { BookSelector } from "~/features/books/components/book-selector";
@@ -22,9 +21,9 @@ export function ChatSession({
   previewOpen: boolean;
   onCitation: (source: CitationSource) => void;
 }) {
-  const [draft, setDraft] = useState("");
   const { books, selectedBook } = useBooks();
-  const { messages, sendMessage, status, error, stop, progress } = useBookChat();
+  const { messages, sendMessage, status, error, stop, progress, draft, setDraft, newChat } =
+    useBookChat();
   const busy = status === "submitted" || status === "streaming";
   const processingBooks = books.some(
     (book) => book.status === "uploading" || (book.status === "uploaded" && !book.active_index_id),
@@ -54,7 +53,7 @@ export function ChatSession({
       <header className="flex shrink-0 items-center justify-between gap-3 px-page-gutter py-3 sm:px-page-gutter-wide">
         <BookSelector
           onChange={() => {
-            setDraft("");
+            newChat();
             onBookSelected();
           }}
         />
@@ -103,11 +102,11 @@ export function ChatSession({
           waitingForBook={!selectedBook && processingBooks}
           busy={busy}
           onStop={() => {
-            void stop();
+            stop();
           }}
           onSend={() => {
             if (selectedBook?.active_index_id && !busy && draft.trim()) {
-              void sendMessage({ text: draft.trim() });
+              sendMessage({ text: draft.trim() });
               setDraft("");
             }
           }}

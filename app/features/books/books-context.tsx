@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { listBooks } from "./api/books";
 import type { BookSummary } from "./api/types";
@@ -37,19 +37,24 @@ export function BooksProvider({ children }: { children: ReactNode }) {
   });
   const books = library.data?.pages.flat() ?? [];
   const readyBooks = books.filter((book) => book.status === "uploaded" && book.active_index_id);
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = library;
+
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <BooksContext.Provider
       value={{
         books,
-        selectedBook: readyBooks.find((book) => book.id === selectedId) ?? readyBooks[0],
+        selectedBook: books.find((book) => book.id === selectedId) ?? readyBooks[0],
         selectBook: setSelectedId,
         loading: library.isPending,
         error: library.error,
         hasMore: library.hasNextPage,
         loadingMore: library.isFetchingNextPage,
         loadMore: () => {
-          void library.fetchNextPage();
+          library.fetchNextPage();
         },
       }}
     >

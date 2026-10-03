@@ -12,10 +12,14 @@ import type { CitationSource } from "~/features/chat/types";
 
 it("selects a saved book automatically and lets the reader choose another", async () => {
   const { user } = renderChatPage();
-  const selector = screen.getByRole("combobox", { name: "Book to chat with" });
 
   expect(screen.queryByRole("region", { name: "PDF preview" })).not.toBeInTheDocument();
-  await waitFor(() => expect(selector).toHaveTextContent(uploadedBook.filename));
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
+      uploadedBook.filename,
+    ),
+  );
+  const selector = screen.getByRole("combobox", { name: "Book to chat with" });
 
   const initialPreview = within(await screen.findByRole("region", { name: "PDF preview" }));
 
@@ -25,7 +29,11 @@ it("selects a saved book automatically and lets the reader choose another", asyn
   await user.keyboard("{ArrowDown}");
   await user.click(await screen.findByRole("option", { name: bookWithoutThumbnail.filename }));
 
-  await waitFor(() => expect(selector).toHaveTextContent(bookWithoutThumbnail.filename));
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
+      bookWithoutThumbnail.filename,
+    ),
+  );
 
   const preview = within(await screen.findByRole("region", { name: "PDF preview" }));
 
@@ -44,9 +52,10 @@ async function selectBook(
   user: ReturnType<typeof renderChatPage>["user"],
   name = uploadedBook.filename,
 ) {
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toBeEnabled(),
+  );
   const selector = screen.getByRole("combobox", { name: "Book to chat with" });
-
-  await waitFor(() => expect(selector).toBeEnabled());
 
   if (selector.textContent?.includes(name)) return;
 
@@ -59,7 +68,7 @@ it("lets the reader send a question, view matching passages, and ask a follow-up
   let answered = false;
 
   server.use(
-    http.post(`${apiUrl}/books/:id/chat`, () => {
+    http.post(`${apiUrl}/books/:id/conversations`, () => {
       const response = answered
         ? chatAnswer("Pause after each paragraph and reflect on what you read.")
         : chatAnswer("Read **slowly**.", true);
@@ -68,6 +77,9 @@ it("lets the reader send a question, view matching passages, and ask a follow-up
 
       return response;
     }),
+    http.post(`${apiUrl}/books/:id/conversations/:conversationId/messages`, () =>
+      chatAnswer("Pause after each paragraph and reflect on what you read."),
+    ),
   );
   const { user } = renderChatPage();
 
@@ -94,8 +106,11 @@ it("lets the reader send a question, view matching passages, and ask a follow-up
 
 it("keeps a failed question with an inline error and no retry button", async () => {
   server.use(
-    http.post(`${apiUrl}/books/:id/chat`, () =>
-      HttpResponse.json({ detail: "Chat is not configured" }, { status: 503 }),
+    http.post(`${apiUrl}/books/:id/conversations`, () =>
+      HttpResponse.json(
+        { detail: "Chat is not configured" },
+        { status: 503, headers: { "x-conversation-id": "failed-conversation" } },
+      ),
     ),
   );
   const { user } = renderChatPage();
@@ -107,9 +122,40 @@ it("keeps a failed question with an inline error and no retry button", async () 
   expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
 });
 
+it("starts a new conversation after a failed stream even when it received an ID", async () => {
+  let creates = 0;
+
+  server.use(
+    http.post(`${apiUrl}/books/:id/conversations`, () => {
+      creates++;
+
+      return creates === 1
+        ? new HttpResponse(
+            'data: {"type":"start","messageId":"failed-answer"}\n\ndata: {"type":"error","errorText":"Generation failed"}\n\ndata: [DONE]\n\n',
+            {
+              headers: {
+                "Content-Type": "text/event-stream",
+                "x-vercel-ai-ui-message-stream": "v1",
+                "x-conversation-id": "unsaved-conversation",
+              },
+            },
+          )
+        : chatAnswer();
+    }),
+  );
+  const { user } = renderChatPage();
+
+  await selectBook(user);
+  await typeQuestion(user, "What should I notice?{Enter}");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Generation failed");
+  await typeQuestion(user, "Can you try again?{Enter}");
+  expect(await screen.findByText("slowly", { selector: "strong" })).toBeVisible();
+  expect(creates).toBe(2);
+});
+
 it("falls back to a readable chat error when the error body does not match its schema", async () => {
   server.use(
-    http.post(`${apiUrl}/books/:id/chat`, () =>
+    http.post(`${apiUrl}/books/:id/conversations`, () =>
       HttpResponse.json({ detail: ["invalid"] }, { status: 503 }),
     ),
   );
@@ -126,7 +172,7 @@ it("stops a streaming answer and clears the conversation when switching books", 
   const pending = pendingChatAnswer();
 
   server.use(
-    http.post(`${apiUrl}/books/:id/chat`, ({ params }) =>
+    http.post(`${apiUrl}/books/:id/conversations`, ({ params }) =>
       params.id === bookWithoutThumbnail.id
         ? chatAnswer("Explore this book at your own pace.")
         : pending.response,
@@ -164,14 +210,18 @@ it("stops a streaming answer and clears the conversation when switching books", 
 });
 
 it("offers a processing book for chat once it becomes ready", async () => {
-  server.use(http.post(`${apiUrl}/books/:id/chat`, () => chatAnswer()));
+  server.use(http.post(`${apiUrl}/books/:id/conversations`, () => chatAnswer()));
   library[0].active_index_id = null;
   library[1].active_index_id = null;
   const { user } = renderChatPage();
 
+  await waitFor(() =>
+    expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
+      "No books ready yet",
+    ),
+  );
   const selector = screen.getByRole("combobox", { name: "Book to chat with" });
 
-  await waitFor(() => expect(selector).toHaveTextContent("No books ready yet"));
   await user.click(selector);
   expect(
     screen.getByRole("option", { name: `${library[0].filename} · Processing` }),
@@ -185,7 +235,9 @@ it("offers a processing book for chat once it becomes ready", async () => {
   await waitFor(() => expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled(), {
     timeout: 4_000,
   });
-  expect(selector).toHaveTextContent(library[0].filename);
+  expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
+    library[0].filename,
+  );
   await user.click(screen.getByRole("button", { name: "Send message" }));
   expect(await screen.findByText("Help me read")).toBeVisible();
   expect(await screen.findByText("slowly", { selector: "strong" })).toBeVisible();
@@ -212,13 +264,16 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
   let history: { messages: { role: string; parts: unknown[] }[] } | undefined;
 
   server.use(
-    http.post(`${apiUrl}/books/:id/chat`, async ({ request }) => {
-      history = (await request.json()) as typeof history;
-
-      return chatAnswer("Small habits compound.[1](#cite-s1) [old](#cite-old)", false, [
+    http.post(`${apiUrl}/books/:id/conversations`, () =>
+      chatAnswer("Small habits compound.[1](#cite-s1) [old](#cite-old)", false, [
         { sources: [{ ...source, id: "old" }] },
         { sources: [source] },
-      ]);
+      ]),
+    ),
+    http.post(`${apiUrl}/books/:id/conversations/:conversationId/messages`, async ({ request }) => {
+      history = (await request.json()) as typeof history;
+
+      return chatAnswer("A follow-up answer.");
     }),
     http.get(`${apiUrl}/books/${source.book_id}/pdf`, () => {
       pdfCalls++;
@@ -255,20 +310,12 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
   expect(pdfCalls).toBe(2);
 
   await typeQuestion(user, "Explain more{Enter}");
-  await waitFor(() =>
-    expect(history?.messages.filter((message) => message.role === "assistant")).toHaveLength(1),
-  );
-  const assistant = history!.messages.find((message) => message.role === "assistant")!;
-
-  expect(assistant.parts).toContainEqual({
-    type: "data-citations",
-    id: "citations",
-    data: { sources: [source] },
-  });
+  await waitFor(() => expect(history?.messages).toHaveLength(1));
+  expect(history?.messages[0].role).toBe("user");
 });
 
 it("keeps Shift+Enter as a new line until the reader clicks Send", async () => {
-  server.use(http.post(`${apiUrl}/books/:id/chat`, () => chatAnswer()));
+  server.use(http.post(`${apiUrl}/books/:id/conversations`, () => chatAnswer()));
   const { user } = renderChatPage();
 
   await selectBook(user);

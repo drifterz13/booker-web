@@ -17,6 +17,7 @@ function textEvents(text: string) {
 const headers = {
   "Content-Type": "text/event-stream",
   "x-vercel-ai-ui-message-stream": "v1",
+  "x-conversation-id": "conversation-1",
 };
 
 export function chatAnswer(
