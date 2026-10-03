@@ -177,48 +177,49 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
             <p>{error}</p>
           </div>
         ) : (
-          <Document
-            className="flex flex-col items-center gap-4"
-            file={url}
-            options={PDF_OPTIONS}
-            suspense={false}
-            onLoadSuccess={(loaded) => {
-              setPdfDocument(loaded);
-
-              if (initialPage > loaded.numPages) {
-                setError(`The cited page ${initialPage} is not available in this PDF.`);
-              }
-            }}
-            onLoadError={() =>
-              setError("This PDF could not be opened. It may be damaged or unsupported.")
-            }
-            onSourceError={() => setError("This PDF could not be read. Try reopening the preview.")}
-            onPassword={() =>
-              setError("This PDF is password protected. Select an unlocked copy to preview it.")
-            }
-            loading={
+          <>
+            {!pdfDocument && (
               <div className="relative aspect-[612/792] w-full bg-background shadow-sm">
                 <PdfPageLoading />
               </div>
-            }
-            error={
-              <p role="alert" className="text-sm text-danger">
-                {error ?? "This PDF could not be opened."}
-              </p>
-            }
-          >
-            {pdfDocument &&
-              width > 0 &&
-              Array.from({ length: pages }, (_, index) => (
-                <LazyPdfPage
-                  key={index + 1}
-                  document={pdfDocument}
-                  pageNumber={index + 1}
-                  width={width * zoom}
-                  scrollRoot={containerRef}
-                />
-              ))}
-          </Document>
+            )}
+            <Document
+              className="flex flex-col items-center gap-4"
+              file={url}
+              options={PDF_OPTIONS}
+              suspense={false}
+              onLoadSuccess={(loaded) => {
+                setPdfDocument(loaded);
+
+                if (initialPage > loaded.numPages) {
+                  setError(`The cited page ${initialPage} is not available in this PDF.`);
+                }
+              }}
+              onLoadError={() =>
+                setError("This PDF could not be opened. It may be damaged or unsupported.")
+              }
+              onSourceError={() =>
+                setError("This PDF could not be read. Try reopening the preview.")
+              }
+              onPassword={() =>
+                setError("This PDF is password protected. Select an unlocked copy to preview it.")
+              }
+              loading={null}
+              error={null}
+            >
+              {pdfDocument &&
+                width > 0 &&
+                Array.from({ length: pages }, (_, index) => (
+                  <LazyPdfPage
+                    key={index + 1}
+                    document={pdfDocument}
+                    pageNumber={index + 1}
+                    width={width * zoom}
+                    scrollRoot={containerRef}
+                  />
+                ))}
+            </Document>
+          </>
         )}
       </div>
     </div>

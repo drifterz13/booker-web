@@ -92,6 +92,38 @@ it("enters and exits fullscreen from the PDF toolbar", async () => {
   }
 });
 
+it("uses the book loader while a PDF document is loading", async () => {
+  let releasePdf!: () => void;
+  const pdfReady = new Promise<void>((resolve) => {
+    releasePdf = resolve;
+  });
+
+  server.use(
+    http.get("https://storage.booker.test/books/:filename", async () => {
+      await pdfReady;
+
+      return new HttpResponse(makePreviewPdf(), { headers: { "Content-Type": "application/pdf" } });
+    }),
+  );
+
+  try {
+    const { user } = renderChatPage();
+
+    await selectBook(user);
+
+    const preview = within(await screen.findByRole("region", { name: "PDF preview" }));
+
+    expect(await preview.findByLabelText("PDF controls")).toBeVisible();
+    expect(preview.getAllByText("Loading page…")).toHaveLength(1);
+    expect(
+      preview.getByText("Loading page…").closest("output")?.querySelector(".book-motion"),
+    ).toBeTruthy();
+    expect(preview.queryByText("Loading PDF…")).not.toBeInTheDocument();
+  } finally {
+    releasePdf();
+  }
+});
+
 async function selectBook(
   user: ReturnType<typeof renderChatPage>["user"],
   name = uploadedBook.filename,
