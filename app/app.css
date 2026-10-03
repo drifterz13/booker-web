@@ -94,6 +94,65 @@
 }
 
 @layer components {
+  .start-book-item {
+    animation: start-book-arrival 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--book-index) * 55ms);
+  }
+
+  .start-book-stage::after {
+    position: absolute;
+    right: 0;
+    bottom: 9px;
+    left: 0;
+    height: 8px;
+    border-radius: 1px;
+    background: var(--secondary);
+    box-shadow: 0 5px 7px -6px rgb(34 35 34 / 22%);
+    content: "";
+  }
+
+  .start-book-cover {
+    z-index: 1;
+    box-shadow:
+      inset 4px 0 5px -4px rgb(0 0 0 / 28%),
+      4px 7px 10px -7px rgb(34 35 34 / 38%);
+    transform-origin: 50% 100%;
+    transition:
+      transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .start-book-cover::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 5px;
+    width: 1px;
+    background: rgb(0 0 0 / 12%);
+    content: "";
+  }
+
+  .start-book-action svg {
+    transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .start-book:hover .start-book-cover,
+  .start-book:focus-visible .start-book-cover {
+    box-shadow:
+      inset 4px 0 5px -4px rgb(0 0 0 / 28%),
+      9px 18px 21px -11px rgb(34 35 34 / 32%);
+    transform: translateY(-9px) rotate(-2deg);
+  }
+
+  .start-book:hover .start-book-action svg,
+  .start-book:focus-visible .start-book-action svg {
+    transform: translateX(3px);
+  }
+
+  .start-book:active .start-book-cover {
+    transform: translateY(-4px) rotate(-1deg);
+  }
+
   .books-page-header,
   .book-card {
     animation: books-arrival 400ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
@@ -244,6 +303,36 @@
   .chat-markdown td,
   .chat-markdown th {
     @apply border px-2;
+  }
+}
+
+@keyframes start-book-arrival {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start-book-item {
+    animation: none;
+  }
+
+  .start-book-cover,
+  .start-book-action svg {
+    transition: none;
+  }
+
+  .start-book:hover .start-book-cover,
+  .start-book:focus-visible .start-book-cover,
+  .start-book:active .start-book-cover,
+  .start-book:hover .start-book-action svg,
+  .start-book:focus-visible .start-book-action svg {
+    transform: none;
   }
 }
 

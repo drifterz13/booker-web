@@ -40,6 +40,7 @@ export function BookCard({ book, arrivalIndex = 0 }: { book: BookSummary; arriva
           )}
         </div>
         <span
+          id={`book-status-${book.id}`}
           key={bookStatus(book)}
           className={cn(
             "book-status rounded-md px-2 py-1 text-xs",
@@ -56,8 +57,8 @@ export function BookCard({ book, arrivalIndex = 0 }: { book: BookSummary; arriva
       <p className="mt-2 text-xs text-muted-foreground">
         PDF · Added {new Date(book.created_at).toLocaleDateString()}
       </p>
-      {ready && (
-        <div className="mt-auto pt-5">
+      <div className="mt-auto pt-5">
+        {ready ? (
           <Button asChild size="lg" className="w-full justify-between">
             <Link
               to="/"
@@ -68,8 +69,19 @@ export function BookCard({ book, arrivalIndex = 0 }: { book: BookSummary; arriva
               <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
           </Button>
-        </div>
-      )}
+        ) : (
+          <Button
+            disabled
+            aria-describedby={`book-status-${book.id}`}
+            variant="outline"
+            size="lg"
+            className="w-full justify-between"
+          >
+            Start chat
+            <ArrowRight aria-hidden="true" className="size-4" />
+          </Button>
+        )}
+      </div>
     </article>
   );
 }

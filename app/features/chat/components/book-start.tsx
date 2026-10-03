@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { Link } from "react-router";
 import { useBooks } from "~/features/books/books-context";
@@ -6,39 +6,55 @@ import type { BookSummary } from "~/features/books/api/types";
 import { BookMotion } from "~/shared/components/book-motion";
 import { Button } from "~/shared/components/ui/button";
 
-function StartBookRow({ book, onSelect }: { book: BookSummary; onSelect: (id: string) => void }) {
+function StartBook({
+  book,
+  index,
+  onSelect,
+}: {
+  book: BookSummary;
+  index: number;
+  onSelect: (id: string) => void;
+}) {
   const [failedThumbnail, setFailedThumbnail] = useState(false);
 
   return (
-    <li>
+    <li
+      className="start-book-item min-w-0"
+      style={{ "--book-index": Math.min(index, 6) } as CSSProperties}
+    >
       <button
         type="button"
+        aria-label={`Start chat with ${book.filename}`}
         onClick={() => onSelect(book.id)}
-        className="group flex min-h-20 w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary"
+        className="start-book group flex h-full w-full flex-col rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
       >
-        <span className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-secondary text-primary">
-          {book.thumbnail_url && !failedThumbnail ? (
-            <img
-              src={book.thumbnail_url}
-              alt=""
-              loading="lazy"
-              className="h-full w-full object-cover"
-              onError={() => setFailedThumbnail(true)}
-            />
-          ) : (
-            <BookOpen aria-hidden="true" className="size-5" />
-          )}
+        <span className="start-book-stage relative flex h-48 w-full items-end justify-center pb-4 sm:h-52">
+          <span className="start-book-cover relative flex h-40 w-28 shrink-0 items-center justify-center overflow-hidden rounded-r-[5px] rounded-l-[2px] bg-secondary text-primary sm:h-44 sm:w-[7.75rem]">
+            {book.thumbnail_url && !failedThumbnail ? (
+              <img
+                src={book.thumbnail_url}
+                alt=""
+                loading="lazy"
+                className="h-full w-full object-cover"
+                onError={() => setFailedThumbnail(true)}
+              />
+            ) : (
+              <BookOpen aria-hidden="true" className="size-10 stroke-[1.25]" />
+            )}
+          </span>
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="line-clamp-2 text-sm font-medium leading-5 text-foreground">
+        <span className="mt-4 block w-full px-1 pb-1">
+          <span
+            className="block w-full truncate text-sm font-medium leading-5 text-foreground"
+            title={book.filename}
+          >
             {book.filename}
           </span>
-          <span className="mt-1 block text-xs text-muted-foreground">Start chat</span>
+          <span className="start-book-action mt-2 flex items-center gap-1.5 text-xs font-semibold text-primary">
+            Start chat
+            <ArrowRight aria-hidden="true" className="size-3.5" />
+          </span>
         </span>
-        <ArrowRight
-          aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-        />
       </button>
     </li>
   );
@@ -53,13 +69,13 @@ export function BookStart({ onSelect }: { onSelect: (id: string) => void }) {
 
   return (
     <section aria-label="Start chat" className="h-full overflow-y-auto">
-      <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-page-gutter py-section-gap sm:px-page-gutter-wide">
-        <BookMotion className="mb-4 size-12" />
-        <h1 className="text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
+      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col justify-center px-page-gutter py-section-gap sm:px-page-gutter-wide">
+        <BookMotion className="mb-5 size-10" />
+        <h1 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
           Start a chat
         </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
-          Choose a book to ask questions about.
+        <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
+          Every conversation starts with a book. Choose one from your shelf to begin.
         </p>
         {loading ? (
           <output className="mt-section-gap flex items-center gap-2 text-sm text-muted-foreground">
@@ -72,10 +88,10 @@ export function BookStart({ onSelect }: { onSelect: (id: string) => void }) {
           </p>
         ) : readyBooks.length > 0 ? (
           <>
-            <h2 className="mt-section-gap text-sm font-medium">Ready to chat</h2>
-            <ul className="mt-3 grid gap-x-4 sm:grid-cols-2">
-              {readyBooks.map((book) => (
-                <StartBookRow key={book.id} book={book} onSelect={onSelect} />
+            <h2 className="mt-10 text-sm font-medium">Your books</h2>
+            <ul className="mt-2 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-4">
+              {readyBooks.map((book, index) => (
+                <StartBook key={book.id} book={book} index={index} onSelect={onSelect} />
               ))}
             </ul>
             {hasMore && (

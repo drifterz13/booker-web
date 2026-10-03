@@ -64,6 +64,7 @@ describe("My books", () => {
 
     expect(await screen.findByRole("heading", { name: uploadedBook.filename })).toBeVisible();
     expect(screen.getByText(label)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Start chat" })).toBeDisabled();
   });
 
   it("shows processing for an uploaded book before its chat index is ready", async () => {
@@ -72,6 +73,7 @@ describe("My books", () => {
 
     expect(await screen.findByText("Processing")).toBeVisible();
     expect(screen.queryByText("Ready to chat")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start chat" })).toBeDisabled();
   });
 
   it("refreshes a processing book and stops polling when it is ready", async () => {
