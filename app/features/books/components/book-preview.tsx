@@ -58,7 +58,6 @@ export function BookPreview({
           <PdfReader
             key={`${pdf.data.url}:${citation?.requestId ?? "preview"}`}
             url={pdf.data.url}
-            name={book.filename}
             initialPage={citation?.pages[0]}
           />
         </Suspense>

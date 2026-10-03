@@ -3,8 +3,8 @@ import { server } from "./mocks/server";
 import { chatAnswer, pendingChatAnswer } from "./mocks/chat";
 import { apiUrl } from "./mocks/handlers/books";
 import { library } from "./mocks/state";
-import { act, screen, waitFor, within } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { expect, it, vi } from "vitest";
 import { bookWithoutThumbnail, uploadedBook } from "./mocks/fixtures";
 import { renderChatPage } from "./render-chat-page";
 import { makePreviewPdf } from "./mocks/pdf";
@@ -40,11 +40,56 @@ it("asks the reader to choose a book before showing the composer", async () => {
     await preview.findByRole("heading", { name: bookWithoutThumbnail.filename }),
   ).toBeVisible();
   expect(await preview.findByText("1 / 1")).toBeVisible();
-  expect(preview.getByRole("link", { name: "Download PDF" })).toHaveAttribute(
-    "download",
-    bookWithoutThumbnail.filename,
-  );
+  expect(preview.getAllByRole("button", { name: "Enter fullscreen" })).toHaveLength(1);
+  expect(preview.queryByRole("button", { name: "Fit page to width" })).not.toBeInTheDocument();
+  expect(preview.queryByRole("link", { name: "Download PDF" })).not.toBeInTheDocument();
   expect(preview.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+it("enters and exits fullscreen from the PDF toolbar", async () => {
+  const { user } = renderChatPage();
+
+  await selectBook(user);
+
+  const preview = within(await screen.findByRole("region", { name: "PDF preview" }));
+  const reader = preview.getByLabelText("PDF controls").parentElement!;
+  let fullscreenElement: Element | null = null;
+
+  Object.defineProperty(document, "fullscreenElement", {
+    configurable: true,
+    get: () => fullscreenElement,
+  });
+  Object.defineProperty(reader, "requestFullscreen", {
+    configurable: true,
+    value: async () => {
+      fullscreenElement = reader;
+      document.dispatchEvent(new Event("fullscreenchange"));
+    },
+  });
+  Object.defineProperty(document, "exitFullscreen", {
+    configurable: true,
+    value: async () => {
+      fullscreenElement = null;
+      document.dispatchEvent(new Event("fullscreenchange"));
+    },
+  });
+
+  try {
+    await user.click(preview.getByRole("button", { name: "Enter fullscreen" }));
+    expect(preview.getByRole("button", { name: "Exit fullscreen" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await user.click(preview.getByRole("button", { name: "Exit fullscreen" }));
+    expect(preview.getByRole("button", { name: "Enter fullscreen" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  } finally {
+    Reflect.deleteProperty(document, "fullscreenElement");
+    Reflect.deleteProperty(document, "exitFullscreen");
+  }
 });
 
 async function selectBook(
@@ -240,6 +285,30 @@ async function typeQuestion(user: ReturnType<typeof renderChatPage>["user"], tex
 }
 
 it("opens citations at their physical PDF page, fetches fresh URLs, and preserves snapshots in history", async () => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(private callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        if (!target.parentElement?.classList.contains("pdf-reader")) return;
+
+        this.callback(
+          [{ target, contentRect: { width: 600 } } as ResizeObserverEntry],
+          this as ResizeObserver,
+        );
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+
   const source: CitationSource = {
     id: "s1",
     book_id: bookWithoutThumbnail.id,
@@ -286,11 +355,31 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
   const preview = within(screen.getByRole("region", { name: "PDF preview" }));
 
   expect(await preview.findByText("2 / 3")).toBeVisible();
+  expect(preview.getAllByLabelText(/^PDF page \d$/)).toHaveLength(3);
   expect(preview.getByRole("heading", { name: bookWithoutThumbnail.filename })).toBeVisible();
   expect(screen.getByRole("combobox", { name: "Book to chat with" })).toHaveTextContent(
     uploadedBook.filename,
   );
   expect(preview.queryByRole("navigation", { name: "Cited PDF pages" })).not.toBeInTheDocument();
+  const scrollRoot = preview.getByLabelText("PDF page 1").parentElement?.parentElement;
+
+  expect(scrollRoot).toBeTruthy();
+
+  const pageFrames = preview.getAllByLabelText(/^PDF page \d$/);
+
+  vi.spyOn(scrollRoot!, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect);
+  pageFrames.forEach((frame, index) => {
+    vi.spyOn(frame, "getBoundingClientRect").mockReturnValue({
+      top: index * 100 - 200,
+      bottom: (index + 1) * 100 - 200,
+    } as DOMRect);
+  });
+  fireEvent.scroll(scrollRoot!);
+  expect(preview.getByText("3 / 3")).toBeVisible();
+
+  await user.click(preview.getByRole("button", { name: "Previous page" }));
+  expect(preview.getByText("2 / 3")).toBeVisible();
+
   await user.click(preview.getByRole("button", { name: "Next page" }));
   expect(preview.getByText("3 / 3")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Open citation: Memory (pp. 2-3)" }));

@@ -18,6 +18,8 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (!visible) return;
+
     let active = true;
 
     document
@@ -36,7 +38,7 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
     return () => {
       active = false;
     };
-  }, [document, pageNumber]);
+  }, [document, pageNumber, visible]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -45,10 +47,11 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setVisible(true);
-          observer.disconnect();
-        }
+        const isVisible = entries.some((entry) => entry.isIntersecting);
+
+        setVisible(isVisible);
+
+        if (!isVisible) setRenderedWidth(undefined);
       },
       { root: scrollRoot.current, rootMargin: "200px" },
     );
@@ -63,6 +66,7 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
     <div
       ref={frameRef}
       aria-label={`PDF page ${pageNumber}`}
+      data-pdf-page={pageNumber}
       className="relative shrink-0 bg-background shadow-sm"
       style={{ width, aspectRatio: aspectRatio ?? 612 / 792 }}
     >

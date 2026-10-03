@@ -386,6 +386,11 @@
   }
 }
 
+.pdf-reader:fullscreen {
+  width: 100vw;
+  height: 100dvh;
+}
+
 /* Override the shared sheet's utility timing only for the PDF reader. */
 .pdf-preview-sheet[data-state="open"] {
   animation-duration: 420ms;

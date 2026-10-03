@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Scan, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, Minimize, ZoomIn, ZoomOut } from "lucide-react";
 import { Document, pdfjs } from "react-pdf";
 import type { PDFDocumentProxy } from "pdfjs-dist";
+import { toast } from "sonner";
 import { Button } from "~/shared/components/ui/button";
 import { LazyPdfPage } from "./lazy-pdf-page";
 import { PdfPageLoading } from "./pdf-loading";
@@ -15,22 +16,72 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 const PDF_OPTIONS = { disableRange: true };
 
-export default function PdfReader({
-  url,
-  name,
-  initialPage = 1,
-}: {
-  url: string;
-  name: string;
-  initialPage?: number;
-}) {
+export default function PdfReader({ url, initialPage = 1 }: { url: string; initialPage?: number }) {
+  const readerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
-  const [document, setDocument] = useState<PDFDocumentProxy>();
-  const pages = document?.numPages ?? 0;
+  const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy>();
+  const pages = pdfDocument?.numPages ?? 0;
   const [page, setPage] = useState(initialPage);
   const [zoom, setZoom] = useState(1);
   const [error, setError] = useState<string>();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const initialPositionedRef = useRef(false);
+
+  function scrollToPage(target: number) {
+    setPage(target);
+
+    const container = containerRef.current;
+    const frame = container?.querySelector<HTMLElement>(`[data-pdf-page="${target}"]`);
+
+    if (!container || !frame) return;
+
+    container.scrollTop +=
+      frame.getBoundingClientRect().top - container.getBoundingClientRect().top;
+  }
+
+  function syncPageFromScroll() {
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    const top = container.getBoundingClientRect().top + 24;
+    const frames = container.querySelectorAll<HTMLElement>("[data-pdf-page]");
+
+    for (const frame of frames) {
+      if (frame.getBoundingClientRect().bottom > top) {
+        setPage(Number(frame.dataset.pdfPage));
+
+        return;
+      }
+    }
+  }
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === readerRef.current);
+
+    document.addEventListener("fullscreenchange", syncFullscreen);
+
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  async function toggleFullscreen() {
+    if (!isFullscreen && !readerRef.current?.requestFullscreen) {
+      toast.error("Fullscreen is unavailable in this browser.");
+
+      return;
+    }
+
+    try {
+      if (isFullscreen) {
+        await document.exitFullscreen();
+      } else {
+        await readerRef.current!.requestFullscreen();
+      }
+    } catch {
+      toast.error("Could not change fullscreen mode.");
+    }
+  }
 
   useEffect(() => {
     const container = containerRef.current;
@@ -47,14 +98,14 @@ export default function PdfReader({
   }, []);
 
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = 0;
-      containerRef.current.scrollLeft = 0;
-    }
-  }, [page]);
+    if (!pdfDocument || !width || initialPositionedRef.current) return;
+
+    initialPositionedRef.current = true;
+    scrollToPage(initialPage);
+  }, [pdfDocument, width, initialPage]);
 
   return (
-    <>
+    <div ref={readerRef} className="pdf-reader flex min-h-0 flex-1 flex-col bg-surface-subtle">
       <div
         aria-label="PDF controls"
         className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-background px-3 py-2"
@@ -65,7 +116,7 @@ export default function PdfReader({
             size="icon-sm"
             aria-label="Previous page"
             disabled={page <= 1 || !pages || Boolean(error)}
-            onClick={() => setPage((current) => current - 1)}
+            onClick={() => scrollToPage(page - 1)}
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -77,7 +128,7 @@ export default function PdfReader({
             size="icon-sm"
             aria-label="Next page"
             disabled={page >= pages || !pages || Boolean(error)}
-            onClick={() => setPage((current) => current + 1)}
+            onClick={() => scrollToPage(page + 1)}
           >
             <ChevronRight className="size-4" />
           </Button>
@@ -107,22 +158,18 @@ export default function PdfReader({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Fit page to width"
-            disabled={!pages || Boolean(error)}
-            onClick={() => setZoom(1)}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            aria-pressed={isFullscreen}
+            onClick={toggleFullscreen}
           >
-            <Scan className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" asChild>
-            <a href={url} download={name} aria-label="Download PDF">
-              <Download className="size-4" />
-            </a>
+            {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
           </Button>
         </div>
       </div>
       <div
         ref={containerRef}
         className="min-h-0 flex-1 overflow-auto p-4"
+        onScroll={syncPageFromScroll}
         style={{ scrollbarGutter: "stable" }}
       >
         {error ? (
@@ -131,11 +178,12 @@ export default function PdfReader({
           </div>
         ) : (
           <Document
+            className="flex flex-col items-center gap-4"
             file={url}
             options={PDF_OPTIONS}
             suspense={false}
             onLoadSuccess={(loaded) => {
-              setDocument(loaded);
+              setPdfDocument(loaded);
 
               if (initialPage > loaded.numPages) {
                 setError(`The cited page ${initialPage} is not available in this PDF.`);
@@ -159,18 +207,20 @@ export default function PdfReader({
               </p>
             }
           >
-            {document && width > 0 && (
-              <LazyPdfPage
-                key={page}
-                document={document}
-                pageNumber={page}
-                width={width * zoom}
-                scrollRoot={containerRef}
-              />
-            )}
+            {pdfDocument &&
+              width > 0 &&
+              Array.from({ length: pages }, (_, index) => (
+                <LazyPdfPage
+                  key={index + 1}
+                  document={pdfDocument}
+                  pageNumber={index + 1}
+                  width={width * zoom}
+                  scrollRoot={containerRef}
+                />
+              ))}
           </Document>
         )}
       </div>
-    </>
+    </div>
   );
 }
