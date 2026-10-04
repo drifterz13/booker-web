@@ -15,7 +15,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-const PDF_OPTIONS = { disableRange: true };
+const PDF_OPTIONS = { disableRange: false, disableStream: true, disableAutoFetch: true };
 
 export default function PdfReader({ url, initialPage = 1 }: { url: string; initialPage?: number }) {
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy>();
@@ -24,7 +24,8 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
   const { readerRef, isFullscreen, toggleFullscreen } = usePdfFullscreen();
   const {
     containerRef,
-    width,
+    virtualizer,
+    pageWidth,
     page,
     zoom,
     changeZoom,
@@ -32,7 +33,7 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
     syncPageFromScroll,
     saveResizeAnchor,
     cancelResizeAnchor,
-  } = usePdfViewport({ initialPage, isReady: Boolean(pdfDocument), isFullscreen });
+  } = usePdfViewport({ initialPage, pageCount: pages, isFullscreen });
 
   async function handleFullscreen() {
     saveResizeAnchor();
@@ -120,7 +121,7 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
               </div>
             )}
             <Document
-              className="flex flex-col items-center gap-4"
+              className="relative"
               file={url}
               options={PDF_OPTIONS}
               suspense={false}
@@ -143,17 +144,25 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
               loading={null}
               error={null}
             >
-              {pdfDocument &&
-                width > 0 &&
-                Array.from({ length: pages }, (_, index) => (
-                  <LazyPdfPage
-                    key={index + 1}
-                    document={pdfDocument}
-                    pageNumber={index + 1}
-                    width={width * zoom}
-                    scrollRoot={containerRef}
-                  />
-                ))}
+              <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
+                {pdfDocument &&
+                  pageWidth > 0 &&
+                  virtualizer.getVirtualItems().map((item) => (
+                    <div
+                      key={item.key}
+                      data-index={item.index}
+                      ref={virtualizer.measureElement}
+                      className="absolute inset-x-0 top-0 flex justify-center"
+                      style={{ transform: `translateY(${item.start}px)` }}
+                    >
+                      <LazyPdfPage
+                        document={pdfDocument}
+                        pageNumber={item.index + 1}
+                        width={pageWidth}
+                      />
+                    </div>
+                  ))}
+              </div>
             </Document>
           </>
         )}

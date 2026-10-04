@@ -316,7 +316,7 @@ async function typeQuestion(user: ReturnType<typeof renderChatPage>["user"], tex
   await user.type(input, text, { skipClick: true });
 }
 
-it("opens citations at their physical PDF page, fetches fresh URLs, and preserves snapshots in history", async () => {
+function stubPdfLayout() {
   let resizeReader: (width: number) => void = () => {};
 
   vi.stubGlobal(
@@ -324,11 +324,36 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
     class {
       constructor(private callback: ResizeObserverCallback) {}
       observe(target: Element) {
+        if (target.hasAttribute("data-index")) {
+          const frame = target.firstElementChild as HTMLElement;
+          const width = Number.parseFloat(frame.style.width);
+          const height = width * (792 / 612);
+
+          vi.spyOn(target, "getBoundingClientRect").mockReturnValue({ width, height } as DOMRect);
+          this.callback(
+            [
+              {
+                target,
+                borderBoxSize: [{ inlineSize: width, blockSize: height }],
+              } as unknown as ResizeObserverEntry,
+            ],
+            this as ResizeObserver,
+          );
+
+          return;
+        }
+
         if (!target.parentElement?.classList.contains("pdf-reader")) return;
 
         resizeReader = (width) =>
           this.callback(
-            [{ target, contentRect: { width } } as ResizeObserverEntry],
+            [
+              {
+                target,
+                contentRect: { width, height: 800 },
+                borderBoxSize: [{ inlineSize: width, blockSize: 800 }],
+              } as unknown as ResizeObserverEntry,
+            ],
             this as ResizeObserver,
           );
         resizeReader(600);
@@ -337,13 +362,41 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
       disconnect() {}
     },
   );
-  vi.stubGlobal(
-    "IntersectionObserver",
-    class {
-      observe() {}
-      disconnect() {}
-    },
+
+  return (width: number) => resizeReader(width);
+}
+
+it("mounts only nearby pages while scrolling a long PDF", async () => {
+  stubPdfLayout();
+  server.use(
+    http.get(
+      "https://storage.booker.test/books/:filename",
+      () =>
+        new HttpResponse(makePreviewPdf(120), { headers: { "Content-Type": "application/pdf" } }),
+    ),
   );
+  const { user } = renderChatPage();
+
+  await selectBook(user);
+
+  const preview = within(await screen.findByRole("region", { name: "PDF preview" }));
+
+  expect(await preview.findByText("1 / 120")).toBeVisible();
+  expect(await preview.findByLabelText("PDF page 1")).toBeVisible();
+  expect(preview.getAllByLabelText(/^PDF page \d+$/).length).toBeLessThan(12);
+
+  const scrollRoot = preview.getByLabelText("PDF controls").nextElementSibling as HTMLElement;
+
+  scrollRoot.scrollTop = 90 * (600 * (792 / 612) + 16);
+  fireEvent.scroll(scrollRoot);
+
+  expect(await preview.findByText("91 / 120")).toBeVisible();
+  expect(await preview.findByLabelText("PDF page 91")).toBeVisible();
+  expect(preview.getAllByLabelText(/^PDF page \d+$/).length).toBeLessThan(12);
+});
+
+it("opens citations at their physical PDF page, fetches fresh URLs, and preserves snapshots in history", async () => {
+  const resizeReader = stubPdfLayout();
 
   const source: CitationSource = {
     id: "s1",
@@ -397,21 +450,13 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
     uploadedBook.filename,
   );
   expect(preview.queryByRole("navigation", { name: "Cited PDF pages" })).not.toBeInTheDocument();
-  const scrollRoot = preview.getByLabelText("PDF page 1").parentElement?.parentElement;
+  const scrollRoot = preview.getByLabelText("PDF controls").nextElementSibling as HTMLElement;
 
   expect(scrollRoot).toBeTruthy();
 
   const pageFrames = preview.getAllByLabelText(/^PDF page \d$/);
 
-  vi.spyOn(scrollRoot!, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect);
-  pageFrames.forEach((frame, index) => {
-    vi.spyOn(frame, "getBoundingClientRect").mockImplementation(() => {
-      const height = Number.parseFloat(frame.style.width) * 1.3;
-      const top = index * (height + 16) - scrollRoot!.scrollTop;
-
-      return { top, bottom: top + height, height } as DOMRect;
-    });
-  });
+  expect(pageFrames).toHaveLength(3);
   scrollRoot!.scrollTop = 2 * (600 * 1.3 + 16) + 30;
   fireEvent.scroll(scrollRoot!);
   expect(preview.getByText("3 / 3")).toBeVisible();

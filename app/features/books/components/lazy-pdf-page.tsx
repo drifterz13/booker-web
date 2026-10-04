@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useState } from "react";
 import { Page } from "react-pdf";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { PdfPageLoading } from "./pdf-loading";
@@ -7,19 +7,14 @@ interface LazyPdfPageProps {
   document: PDFDocumentProxy;
   pageNumber: number;
   width: number;
-  scrollRoot: RefObject<HTMLDivElement | null>;
 }
 
-export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdfPageProps) {
-  const frameRef = useRef<HTMLDivElement>(null);
+export function LazyPdfPage({ document, pageNumber, width }: LazyPdfPageProps) {
   const [aspectRatio, setAspectRatio] = useState<number>();
-  const [visible, setVisible] = useState(false);
   const [renderedWidth, setRenderedWidth] = useState<number>();
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!visible) return;
-
     let active = true;
 
     document
@@ -38,33 +33,11 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
     return () => {
       active = false;
     };
-  }, [document, pageNumber, visible]);
-
-  useEffect(() => {
-    const frame = frameRef.current;
-
-    if (!frame) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const isVisible = entries.some((entry) => entry.isIntersecting);
-
-        setVisible(isVisible);
-
-        if (!isVisible) setRenderedWidth(undefined);
-      },
-      { root: scrollRoot.current, rootMargin: "200px" },
-    );
-
-    observer.observe(frame);
-
-    return () => observer.disconnect();
-  }, [scrollRoot]);
+  }, [document, pageNumber]);
 
   // The frame owns the dimensions; mounting the canvas and text layers cannot resize it.
   return (
     <div
-      ref={frameRef}
       aria-label={`PDF page ${pageNumber}`}
       data-pdf-page={pageNumber}
       className="relative shrink-0 bg-background shadow-sm"
@@ -76,7 +49,7 @@ export function LazyPdfPage({ document, pageNumber, width, scrollRoot }: LazyPdf
         </p>
       ) : (
         <>
-          {aspectRatio && visible && (
+          {aspectRatio && (
             <div className="absolute inset-0">
               <Page
                 pageNumber={pageNumber}
