@@ -7,9 +7,7 @@ import { useBookUpload } from "../upload-context";
 export function BookUpload() {
   const input = useRef<HTMLInputElement>(null);
   const upload = useBookUpload();
-  const buttonLabel = upload.busy
-    ? `Uploading…${upload.phase === "uploading" ? ` ${upload.progress}%` : ""}`
-    : "Add a book";
+  const buttonLabel = upload.busy ? "Adding book…" : "Add a book";
 
   return (
     <div className="w-full max-w-sm">

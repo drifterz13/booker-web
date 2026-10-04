@@ -140,7 +140,7 @@ describe("My books", () => {
 });
 
 describe("Add a book", () => {
-  it("shows upload progress in the button while the file is being sent", async () => {
+  it("keeps the add button disabled until the book appears in the library", async () => {
     server.use(
       http.post(`${apiUrl}/uploads/:id/parts`, async ({ params }) => {
         await delay(300);
@@ -162,9 +162,10 @@ describe("Add a book", () => {
       new File(["PDF"], "In progress.pdf", { type: "application/pdf" }),
     );
 
-    expect(await screen.findByRole("button", { name: /^Uploading… \d+%$/ })).toBeDisabled();
-    expect(screen.queryByRole("status", { name: /Uploading/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Adding book…" })).toBeDisabled();
+    expect(screen.queryByRole("heading", { name: "In progress.pdf" })).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole("button", { name: "Add a book" })).toBeEnabled());
+    expect(await screen.findByRole("heading", { name: "In progress.pdf" })).toBeVisible();
     expect(await screen.findByText("In progress.pdf is now processing.")).toBeVisible();
   });
 

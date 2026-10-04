@@ -79,7 +79,7 @@ export function putPart(
 
 interface UploadOptions {
   signal: AbortSignal;
-  onProgress: (bytes: number) => void;
+  onProgress?: (bytes: number) => void;
   sendPart?: typeof putPart;
   getUrls?: typeof signParts;
 }
@@ -120,7 +120,7 @@ export async function uploadParts(
 
           const etag = await sendPart(url, bytes, controller.signal, (value) => {
             loaded[index] = Math.min(bytes.size, value);
-            onProgress(loaded.reduce((sum, size) => sum + size, 0));
+            onProgress?.(loaded.reduce((sum, size) => sum + size, 0));
           });
 
           parts[index] = { part_number: partNumber, etag };
@@ -135,7 +135,7 @@ export async function uploadParts(
             throw error;
 
           loaded[index] = 0;
-          onProgress(loaded.reduce((sum, size) => sum + size, 0));
+          onProgress?.(loaded.reduce((sum, size) => sum + size, 0));
         }
       }
     }

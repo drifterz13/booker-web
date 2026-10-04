@@ -10,7 +10,6 @@ export function Toaster() {
           toast: "!rounded-lg !border-border !bg-background !text-foreground !shadow-md",
           description: "!text-muted-foreground",
           error: "!border-danger/30",
-          success: "!border-success/30",
         },
       }}
     />

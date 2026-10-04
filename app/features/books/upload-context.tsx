@@ -21,7 +21,6 @@ type Phase =
 interface UploadState {
   phase: Phase;
   filename?: string;
-  progress: number;
 }
 
 interface UploadContextValue extends UploadState {
@@ -33,26 +32,27 @@ const UploadContext = createContext<UploadContextValue | null>(null);
 
 export function BookUploadProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [state, setState] = useState<UploadState>({ phase: "idle", progress: 0 });
+  const [state, setState] = useState<UploadState>({ phase: "idle" });
   const running = useRef(false);
   const mutation = useMutation({
     mutationFn: ({ filename, objectKey }: { filename: string; objectKey: string }) =>
       createBook(filename, objectKey),
     onSuccess: (book) => {
       queryClient.setQueryData(bookKeys.detail(book.id), book);
-      queryClient.invalidateQueries({ queryKey: bookKeys.lists });
+
+      return queryClient.invalidateQueries({ queryKey: bookKeys.lists });
     },
   });
 
   async function registerBook(uploaded: { filename: string; objectKey: string }) {
-    setState({ phase: "creating", filename: uploaded.filename, progress: 100 });
+    setState({ phase: "creating", filename: uploaded.filename });
 
     try {
       await mutation.mutateAsync(uploaded);
-      setState({ phase: "success", filename: uploaded.filename, progress: 100 });
+      setState({ phase: "success", filename: uploaded.filename });
       toast.success("Book uploaded", { description: `${uploaded.filename} is now processing.` });
     } catch (error) {
-      setState({ phase: "error", filename: uploaded.filename, progress: 100 });
+      setState({ phase: "error", filename: uploaded.filename });
       toast.error("Could not add the book", {
         description: `${error instanceof Error ? error.message : "Could not create the book."} The PDF is uploaded. Check the library before trying again; the request may have succeeded.`,
       });
@@ -66,25 +66,19 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
     let upload: Upload | undefined;
     let finished = false;
 
-    setState({ phase: "preparing", filename: file.name, progress: 0 });
+    setState({ phase: "preparing", filename: file.name });
 
     try {
       // Receive the upload ID even if cancelled during preparation, so it can be cleaned up.
       upload = await startUpload(file.name);
       control.signal.throwIfAborted();
-      setState({ phase: "uploading", filename: file.name, progress: 0 });
+      setState({ phase: "uploading", filename: file.name });
       const parts = await uploadParts(file, upload, {
         signal: control.signal,
-        onProgress: (bytes) =>
-          setState({
-            phase: "uploading",
-            filename: file.name,
-            progress: Math.floor((bytes / file.size) * 100),
-          }),
       });
 
       control.signal.throwIfAborted();
-      setState({ phase: "finalizing", filename: file.name, progress: 100 });
+      setState({ phase: "finalizing", filename: file.name });
       const result = await completeUpload(upload, parts);
 
       finished = true;
@@ -110,7 +104,6 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
       setState({
         phase: control.signal.aborted && !cleanupError ? "cancelled" : "error",
         filename: file.name,
-        progress: 0,
       });
 
       if (!control.signal.aborted || cleanupError) {
@@ -127,7 +120,7 @@ export function BookUploadProvider({ children }: { children: ReactNode }) {
     const error = validateBook(file);
 
     if (error) {
-      setState({ phase: "error", progress: 0 });
+      setState({ phase: "error" });
       toast.error(error);
 
       return;
