@@ -13,11 +13,15 @@ interface PdfViewportOptions {
 export function usePdfViewport({ initialPage, pageCount, isFullscreen }: PdfViewportOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
+  const widthRef = useRef(width);
+
+  widthRef.current = width;
   const [page, setPage] = useState(initialPage);
   const [zoom, setZoom] = useState(1);
   const pageRef = useRef(page);
   const initialPositionedRef = useRef(false);
   const resizeAnchorRef = useRef<{ page: number; offset: number } | null>(null);
+  const holdAnchorRef = useRef(false);
   const releaseAnchorRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pageWidth = width * zoom;
   // oxlint-disable-next-line react/incompatible-library -- The virtualizer owns its scroll measurements outside React Compiler memoization.
@@ -75,6 +79,7 @@ export function usePdfViewport({ initialPage, pageCount, isFullscreen }: PdfView
 
   function cancelResizeAnchor() {
     resizeAnchorRef.current = null;
+    holdAnchorRef.current = false;
 
     if (releaseAnchorRef.current) clearTimeout(releaseAnchorRef.current);
 
@@ -84,6 +89,15 @@ export function usePdfViewport({ initialPage, pageCount, isFullscreen }: PdfView
   function changeZoom(next: number) {
     saveResizeAnchor();
     setZoom(next);
+  }
+
+  function beginFullscreenResize() {
+    saveResizeAnchor();
+    holdAnchorRef.current = true;
+
+    if (releaseAnchorRef.current) clearTimeout(releaseAnchorRef.current);
+
+    releaseAnchorRef.current = null;
   }
 
   function scrollToPage(target: number) {
@@ -130,9 +144,7 @@ export function usePdfViewport({ initialPage, pageCount, isFullscreen }: PdfView
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- The effect runs when the document or measured width becomes available.
   }, [pageCount, width, initialPage]);
 
-  useLayoutEffect(() => {
-    virtualizer.measure();
-
+  function restoreResizeAnchor() {
     const anchor = resizeAnchorRef.current;
     const container = containerRef.current;
 
@@ -145,12 +157,41 @@ export function usePdfViewport({ initialPage, pageCount, isFullscreen }: PdfView
     container.scrollTop = item.start + anchor.offset * item.size;
     updatePage(anchor.page);
 
+    if (holdAnchorRef.current) return;
+
     if (releaseAnchorRef.current) clearTimeout(releaseAnchorRef.current);
 
     releaseAnchorRef.current = setTimeout(() => {
       resizeAnchorRef.current = null;
       releaseAnchorRef.current = null;
     }, 200);
+  }
+
+  function finishFullscreenResize() {
+    const container = containerRef.current;
+
+    if (container?.clientWidth) {
+      const style = getComputedStyle(container);
+      const contentWidth =
+        container.clientWidth -
+        Number.parseFloat(style.paddingLeft) -
+        Number.parseFloat(style.paddingRight);
+
+      if (contentWidth > 0 && Math.abs(contentWidth - widthRef.current) > 1) {
+        setWidth(contentWidth);
+        requestAnimationFrame(finishFullscreenResize);
+
+        return;
+      }
+    }
+
+    holdAnchorRef.current = false;
+    restoreResizeAnchor();
+  }
+
+  useLayoutEffect(() => {
+    virtualizer.measure();
+    restoreResizeAnchor();
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- These are the dimensions that change page positions.
   }, [width, zoom, isFullscreen]);
 
@@ -171,6 +212,8 @@ export function usePdfViewport({ initialPage, pageCount, isFullscreen }: PdfView
     scrollToPage,
     syncPageFromScroll,
     saveResizeAnchor,
+    beginFullscreenResize,
+    finishFullscreenResize,
     cancelResizeAnchor,
   };
 }

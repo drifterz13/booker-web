@@ -31,14 +31,19 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
     changeZoom,
     scrollToPage,
     syncPageFromScroll,
-    saveResizeAnchor,
+    beginFullscreenResize,
+    finishFullscreenResize,
     cancelResizeAnchor,
   } = usePdfViewport({ initialPage, pageCount: pages, isFullscreen });
 
   async function handleFullscreen() {
-    saveResizeAnchor();
+    beginFullscreenResize();
 
-    if (!(await toggleFullscreen())) cancelResizeAnchor();
+    if (!(await toggleFullscreen())) {
+      cancelResizeAnchor();
+    } else {
+      requestAnimationFrame(finishFullscreenResize);
+    }
   }
 
   return (
@@ -107,7 +112,7 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
         ref={containerRef}
         className="min-h-0 flex-1 overflow-auto p-4"
         onScroll={syncPageFromScroll}
-        style={{ scrollbarGutter: "stable" }}
+        style={{ scrollbarGutter: "stable", overflowAnchor: "none" }}
       >
         {error ? (
           <div role="alert" className="text-sm text-danger">

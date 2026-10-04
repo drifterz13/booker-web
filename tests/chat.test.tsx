@@ -53,6 +53,7 @@ it("enters and exits fullscreen from the PDF toolbar", async () => {
 
   const preview = within(await screen.findByRole("region", { name: "PDF preview" }));
   const reader = preview.getByLabelText("PDF controls").parentElement!;
+
   let fullscreenElement: Element | null = null;
 
   Object.defineProperty(document, "fullscreenElement", {
@@ -366,8 +367,9 @@ function stubPdfLayout() {
   return (width: number) => resizeReader(width);
 }
 
-it("mounts only nearby pages while scrolling a long PDF", async () => {
-  stubPdfLayout();
+it("keeps a distant page mounted through fullscreen and subsequent scrolling", async () => {
+  const resizeReader = stubPdfLayout();
+
   server.use(
     http.get(
       "https://storage.booker.test/books/:filename",
@@ -393,6 +395,35 @@ it("mounts only nearby pages while scrolling a long PDF", async () => {
   expect(await preview.findByText("91 / 120")).toBeVisible();
   expect(await preview.findByLabelText("PDF page 91")).toBeVisible();
   expect(preview.getAllByLabelText(/^PDF page \d+$/).length).toBeLessThan(12);
+
+  const reader = preview.getByLabelText("PDF controls").parentElement!;
+  let fullscreenElement: Element | null = null;
+  const beforeFullscreen = scrollRoot.scrollTop;
+
+  Object.defineProperty(document, "fullscreenElement", {
+    configurable: true,
+    get: () => fullscreenElement,
+  });
+  Object.defineProperty(reader, "requestFullscreen", {
+    configurable: true,
+    value: async () => {
+      fullscreenElement = reader;
+      document.dispatchEvent(new Event("fullscreenchange"));
+      resizeReader(900);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      scrollRoot.scrollTop = beforeFullscreen;
+    },
+  });
+
+  try {
+    await user.click(preview.getByRole("button", { name: "Enter fullscreen" }));
+    await waitFor(() => expect(preview.getByLabelText("PDF page 91")).toBeVisible());
+    await waitFor(() => expect(scrollRoot.scrollTop).toBeGreaterThan(beforeFullscreen));
+    fireEvent.scroll(scrollRoot);
+    expect(preview.getByText("91 / 120")).toBeVisible();
+  } finally {
+    Reflect.deleteProperty(document, "fullscreenElement");
+  }
 });
 
 it("opens citations at their physical PDF page, fetches fresh URLs, and preserves snapshots in history", async () => {
