@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, ZoomIn, ZoomOut } from "lucide-react";
 import { Document, pdfjs } from "react-pdf";
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import { toast } from "sonner";
 import { Button } from "~/shared/components/ui/button";
+import { usePdfFullscreen } from "../hooks/use-pdf-fullscreen";
+import { usePdfViewport } from "../hooks/use-pdf-viewport";
 import { LazyPdfPage } from "./lazy-pdf-page";
 import { PdfPageLoading } from "./pdf-loading";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -17,92 +18,27 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 const PDF_OPTIONS = { disableRange: true };
 
 export default function PdfReader({ url, initialPage = 1 }: { url: string; initialPage?: number }) {
-  const readerRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy>();
   const pages = pdfDocument?.numPages ?? 0;
-  const [page, setPage] = useState(initialPage);
-  const [zoom, setZoom] = useState(1);
   const [error, setError] = useState<string>();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const initialPositionedRef = useRef(false);
+  const { readerRef, isFullscreen, toggleFullscreen } = usePdfFullscreen();
+  const {
+    containerRef,
+    width,
+    page,
+    zoom,
+    changeZoom,
+    scrollToPage,
+    syncPageFromScroll,
+    saveResizeAnchor,
+    cancelResizeAnchor,
+  } = usePdfViewport({ initialPage, isReady: Boolean(pdfDocument), isFullscreen });
 
-  function scrollToPage(target: number) {
-    setPage(target);
+  async function handleFullscreen() {
+    saveResizeAnchor();
 
-    const container = containerRef.current;
-    const frame = container?.querySelector<HTMLElement>(`[data-pdf-page="${target}"]`);
-
-    if (!container || !frame) return;
-
-    container.scrollTop +=
-      frame.getBoundingClientRect().top - container.getBoundingClientRect().top;
+    if (!(await toggleFullscreen())) cancelResizeAnchor();
   }
-
-  function syncPageFromScroll() {
-    const container = containerRef.current;
-
-    if (!container) return;
-
-    const top = container.getBoundingClientRect().top + 24;
-    const frames = container.querySelectorAll<HTMLElement>("[data-pdf-page]");
-
-    for (const frame of frames) {
-      if (frame.getBoundingClientRect().bottom > top) {
-        setPage(Number(frame.dataset.pdfPage));
-
-        return;
-      }
-    }
-  }
-
-  useEffect(() => {
-    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === readerRef.current);
-
-    document.addEventListener("fullscreenchange", syncFullscreen);
-
-    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
-  }, []);
-
-  async function toggleFullscreen() {
-    if (!isFullscreen && !readerRef.current?.requestFullscreen) {
-      toast.error("Fullscreen is unavailable in this browser.");
-
-      return;
-    }
-
-    try {
-      if (isFullscreen) {
-        await document.exitFullscreen();
-      } else {
-        await readerRef.current!.requestFullscreen();
-      }
-    } catch {
-      toast.error("Could not change fullscreen mode.");
-    }
-  }
-
-  useEffect(() => {
-    const container = containerRef.current;
-
-    if (!container) return;
-
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) setWidth(Math.max(1, entry.contentRect.width));
-    });
-
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!pdfDocument || !width || initialPositionedRef.current) return;
-
-    initialPositionedRef.current = true;
-    scrollToPage(initialPage);
-  }, [pdfDocument, width, initialPage]);
 
   return (
     <div ref={readerRef} className="pdf-reader flex min-h-0 flex-1 flex-col bg-surface-subtle">
@@ -139,7 +75,7 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
             size="icon-sm"
             aria-label="Zoom out"
             disabled={!pages || zoom <= 0.5 || Boolean(error)}
-            onClick={() => setZoom((current) => Math.max(0.5, current - 0.25))}
+            onClick={() => changeZoom(Math.max(0.5, zoom - 0.25))}
           >
             <ZoomOut className="size-4" />
           </Button>
@@ -151,7 +87,7 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
             size="icon-sm"
             aria-label="Zoom in"
             disabled={!pages || zoom >= 2 || Boolean(error)}
-            onClick={() => setZoom((current) => Math.min(2, current + 0.25))}
+            onClick={() => changeZoom(Math.min(2, zoom + 0.25))}
           >
             <ZoomIn className="size-4" />
           </Button>
@@ -160,7 +96,7 @@ export default function PdfReader({ url, initialPage = 1 }: { url: string; initi
             size="icon-sm"
             aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             aria-pressed={isFullscreen}
-            onClick={toggleFullscreen}
+            onClick={handleFullscreen}
           >
             {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
           </Button>

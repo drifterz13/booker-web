@@ -317,6 +317,8 @@ async function typeQuestion(user: ReturnType<typeof renderChatPage>["user"], tex
 }
 
 it("opens citations at their physical PDF page, fetches fresh URLs, and preserves snapshots in history", async () => {
+  let resizeReader: (width: number) => void = () => {};
+
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -324,10 +326,12 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
       observe(target: Element) {
         if (!target.parentElement?.classList.contains("pdf-reader")) return;
 
-        this.callback(
-          [{ target, contentRect: { width: 600 } } as ResizeObserverEntry],
-          this as ResizeObserver,
-        );
+        resizeReader = (width) =>
+          this.callback(
+            [{ target, contentRect: { width } } as ResizeObserverEntry],
+            this as ResizeObserver,
+          );
+        resizeReader(600);
       }
       unobserve() {}
       disconnect() {}
@@ -401,16 +405,51 @@ it("opens citations at their physical PDF page, fetches fresh URLs, and preserve
 
   vi.spyOn(scrollRoot!, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect);
   pageFrames.forEach((frame, index) => {
-    vi.spyOn(frame, "getBoundingClientRect").mockReturnValue({
-      top: index * 100 - 200,
-      bottom: (index + 1) * 100 - 200,
-    } as DOMRect);
+    vi.spyOn(frame, "getBoundingClientRect").mockImplementation(() => {
+      const height = Number.parseFloat(frame.style.width) * 1.3;
+      const top = index * (height + 16) - scrollRoot!.scrollTop;
+
+      return { top, bottom: top + height, height } as DOMRect;
+    });
   });
+  scrollRoot!.scrollTop = 2 * (600 * 1.3 + 16) + 30;
   fireEvent.scroll(scrollRoot!);
   expect(preview.getByText("3 / 3")).toBeVisible();
 
+  const beforeZoom = scrollRoot!.scrollTop;
+
+  await user.click(preview.getByRole("button", { name: "Zoom in" }));
+  expect(preview.getByText("3 / 3")).toBeVisible();
+  expect(scrollRoot!.scrollTop).toBeGreaterThan(beforeZoom);
+
   await user.click(preview.getByRole("button", { name: "Previous page" }));
   expect(preview.getByText("2 / 3")).toBeVisible();
+
+  const reader = preview.getByLabelText("PDF controls").parentElement!;
+  let fullscreenElement: Element | null = null;
+
+  Object.defineProperty(document, "fullscreenElement", {
+    configurable: true,
+    get: () => fullscreenElement,
+  });
+  Object.defineProperty(reader, "requestFullscreen", {
+    configurable: true,
+    value: async () => {
+      fullscreenElement = reader;
+      document.dispatchEvent(new Event("fullscreenchange"));
+      resizeReader(900);
+    },
+  });
+
+  try {
+    const beforeFullscreen = scrollRoot!.scrollTop;
+
+    await user.click(preview.getByRole("button", { name: "Enter fullscreen" }));
+    expect(preview.getByText("2 / 3")).toBeVisible();
+    expect(scrollRoot!.scrollTop).toBeGreaterThan(beforeFullscreen);
+  } finally {
+    Reflect.deleteProperty(document, "fullscreenElement");
+  }
 
   await user.click(preview.getByRole("button", { name: "Next page" }));
   expect(preview.getByText("3 / 3")).toBeVisible();
